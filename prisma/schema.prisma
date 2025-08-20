@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String
+  gender    String
+  age       Int
+  bio       String?
+  createdAt DateTime @default(now())
+  profileId String?  @db.ObjectId
+  matchIds  String[] @db.ObjectId
+}
+
+model Profile {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @unique @db.ObjectId
+  photos     String[]
+  religion   String?
+  caste      String?
+  location   String?
+  occupation String?
+  education  String?
+}
+
+model Match {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userAId   String   @db.ObjectId
+  userBId   String   @db.ObjectId
+  status    String   // e.g., "pending", "accepted", "rejected"
+  createdAt DateTime @default(now())
+}
