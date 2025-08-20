@@ -221,7 +221,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Success Stories Section */}
+
       <section className="py-16 px-4 bg-gradient-to-r from-pink-50 to-purple-50">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
@@ -232,7 +232,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3,4,5,6].map((story) => (
+            {[1].map((story) => (
               <div key={story} className="bg-white rounded-2xl p-8 shadow-lg">
                 <div className="flex items-center mb-6">
                   <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
