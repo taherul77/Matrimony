@@ -13,7 +13,25 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!name || !email || !password || !age || !gender || !location) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, email, password, age, gender, location' },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate age
+    const ageNum = parseInt(age);
+    if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+      return NextResponse.json(
+        { error: 'Age must be between 18 and 100' },
         { status: 400 }
       );
     }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,9 @@ const LoginForm = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,11 +37,42 @@ const LoginForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Login form submitted:', formData);
-      // Handle login here
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setErrors({});
+    setSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage('Login successful! Redirecting...');
+        // Store user data in localStorage (optional)
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Redirect to dashboard or home page
+        setTimeout(() => {
+          router.push('/matches'); // or wherever you want to redirect after login
+        }, 1500);
+      } else {
+        setErrors({ general: data.error || 'Login failed' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ general: 'An error occurred. Please try again.' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,6 +89,20 @@ const LoginForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* General Error Message */}
+        {errors.general && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+            {errors.general}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+            {successMessage}
+          </div>
+        )}
+
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -120,9 +169,14 @@ const LoginForm = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:shadow-xl hover:scale-105 transform hover:-translate-y-1 transition-all duration-300"
+          disabled={isLoading}
+          className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-xl hover:scale-105 transform hover:-translate-y-1'
+          }`}
         >
-          Sign In
+          {isLoading ? 'Signing In...' : 'Sign In'}
         </button>
 
         {/* Divider */}

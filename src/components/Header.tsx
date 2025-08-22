@@ -7,7 +7,8 @@ import { FiMenu, FiX, FiUser, FiHeart, FiSearch, FiLogOut } from 'react-icons/fi
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Demo: simulate logged in user
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +17,39 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkAuthStatus = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
+      // Clear local storage
+      localStorage.removeItem('user');
+      
+      // Update state
+      setIsLoggedIn(false);
+      setUser(null);
+      
+      // Redirect to home
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <header className={`fixed w-full z-50 transition-all duration-300 ${
@@ -51,12 +85,20 @@ const Header = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {isLoggedIn ? (
+            {isLoggedIn && user ? (
               <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <FiUser className="text-white text-sm" />
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <FiUser className="text-white text-sm" />
+                  </div>
+                  <span className="text-gray-700 font-medium">
+                    Welcome, {user.name}
+                  </span>
                 </div>
-                <button className="flex items-center space-x-2 text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105">
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105"
+                >
                   <FiLogOut className="text-sm" />
                   <span>Logout</span>
                 </button>
@@ -102,7 +144,26 @@ const Header = () => {
               <Link href="/profile" className="text-gray-700 hover:text-pink-500 transition-colors">
                 Profile
               </Link>
-              {!isLoggedIn && (
+              
+              {isLoggedIn && user ? (
+                <div className="flex flex-col space-y-3 pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <FiUser className="text-white text-sm" />
+                    </div>
+                    <span className="text-gray-700 font-medium">
+                      Welcome, {user.name}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left flex items-center space-x-2 text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105 py-2"
+                  >
+                    <FiLogOut className="text-sm" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
                 <div className="flex flex-col space-y-3 pt-4 border-t border-gray-200">
                   <Link href="/login">
                     <button className="w-full text-left text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105 font-medium py-2">

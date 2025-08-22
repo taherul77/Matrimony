@@ -34,7 +34,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       {/* Photo Section */}
-      <div className="relative h-96 bg-gradient-to-br from-pink-100 to-purple-100">
+      <div className="relative h-96 bg-gradient-to-br from-blue-100 to-teal-100">
         <img
           src={profile.photos[currentPhotoIndex]}
           alt={profile.name}
@@ -110,15 +110,15 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         {/* Location, Occupation, Education */}
         <div className="space-y-3 mb-6">
           <div className="flex items-center space-x-3 text-gray-600">
-            <FiMapPin className="w-5 h-5 text-pink-500" />
+            <FiMapPin className="w-5 h-5 text-blue-500" />
             <span className="text-base font-medium">{profile.location}</span>
           </div>
           <div className="flex items-center space-x-3 text-gray-600">
-            <FiBriefcase className="w-5 h-5 text-purple-500" />
+            <FiBriefcase className="w-5 h-5 text-teal-500" />
             <span className="text-base font-medium">{profile.occupation}</span>
           </div>
           <div className="flex items-center space-x-3 text-gray-600">
-            <FiBookOpen className="w-5 h-5 text-blue-500" />
+            <FiBookOpen className="w-5 h-5 text-cyan-500" />
             <span className="text-base font-medium">{profile.education}</span>
           </div>
         </div>
@@ -128,12 +128,12 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-          <Link href="/profile" className="flex-1">
-            <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-4 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
+          <Link href={`/profile/${profile.id}`} className="flex-1">
+            <button className="w-full bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-4 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
               View Profile
             </button>
           </Link>
-          <button className="flex-1 border-2 border-pink-500 text-pink-500 py-3 px-4 rounded-full hover:bg-pink-50 hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
+          <button className="flex-1 border-2 border-blue-500 text-blue-600 py-3 px-4 rounded-full hover:bg-blue-50 hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
             Send Interest
           </button>
         </div>

@@ -18,6 +18,8 @@ const RegistrationForm = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -25,6 +27,10 @@ const RegistrationForm = () => {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    // Clear success message when user types
+    if (successMessage) {
+      setSuccessMessage('');
     }
   };
 
@@ -43,18 +49,77 @@ const RegistrationForm = () => {
     }
 
     if (!formData.age) newErrors.age = 'Age is required';
+    else if (parseInt(formData.age) < 18 || parseInt(formData.age) > 100) {
+      newErrors.age = 'Age must be between 18 and 100';
+    }
+
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.location) newErrors.location = 'Location is required';
+    if (!formData.location.trim()) newErrors.location = 'Location is required';
+
+    // Optional phone validation
+    if (formData.phone && !/^\+?[\d\s\-\(\)]{10,}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Form submitted:', formData);
-      // Handle form submission here
+      setIsLoading(true);
+      setErrors({});
+      
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            age: formData.age,
+            gender: formData.gender,
+            location: formData.location,
+            phone: formData.phone,
+            religion: formData.religion,
+            caste: formData.caste,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setSuccessMessage('Registration successful! You can now log in.');
+          // Reset form
+          setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            age: '',
+            gender: '',
+            location: '',
+            phone: '',
+            religion: '',
+            caste: ''
+          });
+          // Redirect to login page after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          setErrors({ submit: data.error || 'Registration failed' });
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        setErrors({ submit: 'Network error. Please try again.' });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -71,6 +136,20 @@ const RegistrationForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+            {successMessage}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {errors.submit && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+            {errors.submit}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-6">
@@ -191,10 +270,13 @@ const RegistrationForm = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all ${
+                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder="Enter phone number"
                 />
               </div>
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
             {/* Religion and Caste */}
@@ -281,9 +363,14 @@ const RegistrationForm = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-5 px-8 rounded-3xl font-bold text-xl hover:shadow-2xl hover:scale-105 transform hover:-translate-y-1 transition-all duration-300"
+          disabled={isLoading}
+          className={`w-full py-5 px-8 rounded-3xl font-bold text-xl transition-all duration-300 ${
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:shadow-2xl hover:scale-105 transform hover:-translate-y-1'
+          } text-white`}
         >
-          Create Account
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </button>
 
         <p className="text-center text-gray-600 text-lg">

@@ -1,83 +1,234 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import Link from 'next/link';
-import { FiEdit, FiCamera, FiMapPin, FiBriefcase, FiBookOpen, FiHeart, FiUser, FiMail, FiPhone } from 'react-icons/fi';
+import { FiEdit, FiCamera, FiMapPin, FiBriefcase, FiBookOpen, FiHeart, FiUser, FiMail, FiPhone, FiSave, FiSearch } from 'react-icons/fi';
 
-// Demo user data
-const demoUser = {
-  name: 'Priya Sharma',
-  age: 25,
-  email: 'priya.sharma@example.com',
-  phone: '+91 98765 43210',
-  location: 'Mumbai, Maharashtra',
-  occupation: 'Software Engineer',
-  education: 'B.Tech Computer Science',
-  religion: 'Hindu',
-  caste: 'Brahmin',
-  bio: 'I am a passionate software engineer who loves to travel and explore new places. Looking for someone who shares similar values and goals in life. I enjoy reading, cooking, and spending time with family.',
-  photos: [
-    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=500&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop&crop=face',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face'
-  ],
-  preferences: {
-    ageRange: '24-30',
-    location: 'Mumbai, Pune, Bangalore',
-    religion: 'Hindu',
-    education: 'Graduate or above'
-  }
-};
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  gender: string;
+  bio?: string;
+}
+
+interface Profile {
+  id: string;
+  userId: string;
+  photos: string[];
+  phone?: string;
+  religion?: string;
+  caste?: string;
+  location?: string;
+  occupation?: string;
+  education?: string;
+}
 
 export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    bio: '',
+    religion: '',
+    caste: '',
+    location: '',
+    occupation: '',
+    education: ''
+  });
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/profile');
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setProfile(data.profile);
+        setFormData({
+          name: data.user.name || '',
+          bio: data.user.bio || '',
+          religion: data.profile?.religion || '',
+          caste: data.profile?.caste || '',
+          location: data.profile?.location || '',
+          occupation: data.profile?.occupation || '',
+          education: data.profile?.education || ''
+        });
+      } else {
+        console.error('Failed to fetch profile');
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setProfile(data.profile);
+        setIsEditing(false);
+      } else {
+        console.error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const nextPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev + 1) % demoUser.photos.length);
+    if (profile?.photos) {
+      setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
+    }
   };
 
   const prevPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev - 1 + demoUser.photos.length) % demoUser.photos.length);
+    if (profile?.photos) {
+      setCurrentPhotoIndex((prev) => (prev - 1 + profile.photos.length) % profile.photos.length);
+    }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to view your profile.</p>
+          <Link href="/login" className="text-pink-500 hover:text-pink-600 mt-2 inline-block">
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
       <Header />
       
-      <div className="pt-20 pb-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          {/* Profile Header */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
+      {/* Hero Banner */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 pt-20 pb-32">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Welcome to Your Profile
+            </h1>
+            <p className="text-xl text-white/90 mb-8">
+              Manage your information and make a great first impression
+            </p>
+            <div className="flex justify-center space-x-4">
               <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300"
+                onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                disabled={isSaving}
+                className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 ${
+                  isSaving 
+                    ? 'bg-gray-400 cursor-not-allowed text-white' 
+                    : 'bg-white text-blue-600 hover:bg-gray-50 hover:scale-105 shadow-lg'
+                }`}
               >
-                <FiEdit className="w-4 h-4" />
-                <span>{isEditing ? 'Save Changes' : 'Edit Profile'}</span>
+                {isSaving ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    {isEditing ? <FiSave className="w-5 h-5" /> : <FiEdit className="w-5 h-5" />}
+                    <span>{isEditing ? 'Save Changes' : 'Edit Profile'}</span>
+                  </div>
+                )}
               </button>
+              {!isEditing && (
+                <Link href="/matches">
+                  <button className="px-8 py-3 rounded-full font-semibold bg-teal-500 text-white hover:bg-teal-600 hover:scale-105 transition-all duration-300 shadow-lg">
+                    <FiHeart className="inline w-5 h-5 mr-2" />
+                    Find Matches
+                  </button>
+                </Link>
+              )}
             </div>
+          </div>
+        </div>
+        {/* Decorative Elements */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden">
+          <svg className="relative block w-full h-12" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="rgb(249, 250, 251)"></path>
+          </svg>
+        </div>
+      </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Profile Photo */}
-              <div className="md:col-span-1">
+      {/* Profile Content */}
+      <div className="relative -mt-20 pb-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          {/* Profile Card */}
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+            {/* Profile Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-teal-50 p-8">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
+                
+                {/* Profile Photo */}
                 <div className="relative">
-                  <div className="relative h-80 bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl overflow-hidden">
-                    <img
-                      src={demoUser.photos[currentPhotoIndex]}
-                      alt={demoUser.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative w-48 h-48 bg-gradient-to-br from-blue-100 to-teal-100 rounded-full overflow-hidden shadow-xl border-4 border-white">
+                    {profile?.photos && profile.photos.length > 0 ? (
+                      <img
+                        src={profile.photos[currentPhotoIndex]}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <FiUser className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                          <p className="text-gray-500 text-sm">No photo</p>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Photo Navigation */}
-                    {demoUser.photos.length > 1 && (
+                    {profile?.photos && profile.photos.length > 1 && (
                       <>
                         <button
                           onClick={prevPhoto}
-                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white transition-colors shadow-lg"
                         >
                           <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -85,131 +236,250 @@ export default function ProfilePage() {
                         </button>
                         <button
                           onClick={nextPhoto}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white transition-colors shadow-lg"
                         >
                           <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </button>
-                        
-                        {/* Photo Indicators */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                          {demoUser.photos.map((_, index) => (
-                            <div
-                              key={index}
-                              className={`w-2 h-2 rounded-full ${
-                                index === currentPhotoIndex ? 'bg-white' : 'bg-white/50'
-                              }`}
-                            />
-                          ))}
-                        </div>
                       </>
                     )}
 
                     {/* Add Photo Button */}
-                    <button className="absolute bottom-4 right-4 bg-white/80 rounded-full p-3 hover:bg-white transition-colors">
-                      <FiCamera className="w-5 h-5 text-gray-700" />
+                    <button className="absolute bottom-2 right-2 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full p-3 hover:scale-110 transition-all duration-300 shadow-lg">
+                      <FiCamera className="w-5 h-5 text-white" />
                     </button>
                   </div>
+                  
+                  {/* Photo Indicators */}
+                  {profile?.photos && profile.photos.length > 1 && (
+                    <div className="flex justify-center mt-4 space-x-2">
+                      {profile.photos.map((_, index: number) => (
+                        <div
+                          key={index}
+                          className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                            index === currentPhotoIndex ? 'bg-blue-500 scale-125' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Basic Info */}
+                <div className="flex-1 text-center lg:text-left">
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="text-3xl font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-xl px-4 py-3 w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="text-4xl font-bold text-gray-800 mb-2">{user.name}</h2>
+                      <p className="text-xl text-gray-600 mb-4">{user.age} years old • {user.gender}</p>
+                      <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                        <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                          📧 {user.email}
+                        </span>
+                        {profile?.location && (
+                          <span className="px-4 py-2 bg-teal-100 text-teal-700 rounded-full text-sm font-medium">
+                            📍 {profile.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
 
-              {/* Profile Info */}
-              <div className="md:col-span-2">
+            </div>
+
+            {/* Profile Details Section */}
+            <div className="p-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                {/* Personal Information */}
                 <div className="space-y-6">
-                  {/* Basic Info */}
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">{demoUser.name}</h2>
-                    <p className="text-gray-600">{demoUser.age} years old</p>
-                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+                      <FiUser className="w-4 h-4 text-white" />
+                    </div>
+                    Personal Info
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Location</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="location"
+                          value={formData.location}
+                          onChange={handleInputChange}
+                          className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Enter your location"
+                        />
+                      ) : (
+                        <p className="text-gray-800 font-medium">{profile?.location || 'Not specified'}</p>
+                      )}
+                    </div>
 
-                  {/* Contact Info */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <FiMail className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.email}</span>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Religion</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="religion"
+                          value={formData.religion}
+                          onChange={handleInputChange}
+                          className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Enter your religion"
+                        />
+                      ) : (
+                        <p className="text-gray-800 font-medium">{profile?.religion || 'Not specified'}</p>
+                      )}
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <FiPhone className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.phone}</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <FiMapPin className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.location}</span>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Caste</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="caste"
+                          value={formData.caste}
+                          onChange={handleInputChange}
+                          className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Enter your caste"
+                        />
+                      ) : (
+                        <p className="text-gray-800 font-medium">{profile?.caste || 'Not specified'}</p>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Professional Info */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <FiBriefcase className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.occupation}</span>
+                {/* Professional Information */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                      <FiBriefcase className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <FiBookOpen className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.education}</span>
+                    Professional Info
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Occupation</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="occupation"
+                          value={formData.occupation}
+                          onChange={handleInputChange}
+                          className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Enter your occupation"
+                        />
+                      ) : (
+                        <p className="text-gray-800 font-medium">{profile?.occupation || 'Not specified'}</p>
+                      )}
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Education</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="education"
+                          value={formData.education}
+                          onChange={handleInputChange}
+                          className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          placeholder="Enter your education"
+                        />
+                      ) : (
+                        <p className="text-gray-800 font-medium">{profile?.education || 'Not specified'}</p>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Religious Info */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <FiUser className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-700">{demoUser.religion} • {demoUser.caste}</span>
+                {/* Contact Information */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+                      <FiMail className="w-4 h-4 text-white" />
+                    </div>
+                    Contact Info
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Email</label>
+                      <p className="text-gray-800 font-medium">{user.email}</p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <label className="text-sm font-medium text-gray-600 mb-2 block">Phone</label>
+                      <p className="text-gray-800 font-medium">{profile?.phone || 'Not provided'}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Bio Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">About Me</h3>
-            <p className="text-gray-700 leading-relaxed">{demoUser.bio}</p>
-          </div>
+            {/* Bio Section */}
+            <div className="bg-gradient-to-r from-blue-50 to-teal-50 p-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-teal-600 rounded-xl flex items-center justify-center mr-4">
+                  <FiHeart className="w-5 h-5 text-white" />
+                </div>
+                About Me
+              </h3>
+              
+              {isEditing ? (
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  rows={6}
+                  className="w-full text-gray-700 bg-white border-2 border-gray-200 rounded-xl px-4 py-3 leading-relaxed focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  placeholder="Tell others about yourself, your interests, what you're looking for in a partner..."
+                />
+              ) : (
+                <div className="bg-white rounded-xl p-6 shadow-sm">
+                  <p className="text-gray-700 leading-relaxed text-lg">
+                    {user.bio || 'No bio provided yet. Click edit to add information about yourself and what you are looking for in a partner.'}
+                  </p>
+                </div>
+              )}
+            </div>
 
-          {/* Preferences Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Partner Preferences</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Age Range:</span>
-                  <span className="font-medium">{demoUser.preferences.ageRange}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Location:</span>
-                  <span className="font-medium">{demoUser.preferences.location}</span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Religion:</span>
-                  <span className="font-medium">{demoUser.preferences.religion}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Education:</span>
-                  <span className="font-medium">{demoUser.preferences.education}</span>
-                </div>
+            {/* Action Buttons */}
+            <div className="p-8 bg-gray-50">
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <Link href="/matches" className="flex-1">
+                  <button className="w-full bg-gradient-to-r from-blue-500 to-teal-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2">
+                    <FiHeart className="w-5 h-5" />
+                    <span>View My Matches</span>
+                  </button>
+                </Link>
+                <Link href="/search" className="flex-1">
+                  <button className="w-full border-2 border-blue-500 text-blue-600 py-4 px-6 rounded-xl font-semibold hover:bg-blue-50 hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2">
+                    <FiSearch className="w-5 h-5" />
+                    <span>Search Profiles</span>
+                  </button>
+                </Link>
               </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/matches" className="flex-1">
-              <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
-                <FiHeart className="inline w-5 h-5 mr-2" />
-                View My Matches
-              </button>
-            </Link>
-            <button className="flex-1 border-2 border-pink-500 text-pink-500 py-3 px-6 rounded-lg font-semibold hover:bg-pink-50 hover:scale-105 transition-all duration-300">
-              Privacy Settings
-            </button>
           </div>
         </div>
       </div>
-    </div>
+
   );
 }

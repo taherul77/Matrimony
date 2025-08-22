@@ -20,6 +20,7 @@ model User {
   name      String
   gender    String
   age       Int
+  phone     String?
   bio       String?
   createdAt DateTime @default(now())
   profileId String?  @db.ObjectId
@@ -30,6 +31,7 @@ model Profile {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   userId     String   @unique @db.ObjectId
   photos     String[]
+  phone      String?
   religion   String?
   caste      String?
   location   String?
