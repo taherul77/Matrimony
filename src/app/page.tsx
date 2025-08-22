@@ -1,102 +1,11 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import ProfileCard from '../components/ProfileCard';
 import Link from 'next/link';
 /* eslint-disable @next/next/no-img-element */
 import { FiHeart, FiUsers, FiShield, FiStar, FiMapPin, FiCheckCircle } from 'react-icons/fi';
-
-// Demo data for profiles
-const demoProfiles = [
-  {
-    id: '1',
-    name: 'Priya Sharma',
-    age: 25,
-    location: 'Mumbai, Maharashtra',
-    occupation: 'Software Engineer',
-    education: 'B.Tech Computer Science',
-    photos: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'I am a passionate software engineer who loves to travel and explore new places. Looking for someone who shares similar values and goals in life.',
-    religion: 'Hindu',
-    caste: 'Brahmin'
-  },
-  {
-    id: '2',
-    name: 'Aisha Khan',
-    age: 27,
-    location: 'Delhi, NCR',
-    occupation: 'Marketing Manager',
-    education: 'MBA Marketing',
-    photos: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Creative and ambitious marketing professional who enjoys reading, cooking, and spending time with family. Seeking a life partner who is kind and family-oriented.',
-    religion: 'Muslim',
-    caste: 'Sunni'
-  },
-  {
-    id: '3',
-    name: 'Rahul Patel',
-    age: 28,
-    location: 'Bangalore, Karnataka',
-    occupation: 'Data Scientist',
-    education: 'M.Tech Data Science',
-    photos: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Tech enthusiast and fitness lover. I believe in continuous learning and personal growth. Looking for someone who is ambitious and has a positive outlook on life.',
-    religion: 'Hindu',
-    caste: 'Patel'
-  },
-  {
-    id: '4',
-    name: 'Sarah Thomas',
-    age: 26,
-    location: 'Chennai, Tamil Nadu',
-    occupation: 'Doctor',
-    education: 'MBBS, MD',
-    photos: [
-      'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Dedicated doctor with a passion for helping others. I love music, dance, and spending time with friends. Seeking a partner who is caring and understanding.',
-    religion: 'Christian',
-    caste: 'Syrian Christian'
-  },
-  {
-    id: '5',
-    name: 'Meera Reddy',
-    age: 24,
-    location: 'Hyderabad, Telangana',
-    occupation: 'UX Designer',
-    education: 'B.Des Design',
-    photos: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Creative designer who loves art, photography, and exploring new cultures. Looking for someone who appreciates creativity and has a zest for life.',
-    religion: 'Hindu',
-    caste: 'Reddy'
-  },
-  {
-    id: '6',
-    name: 'Arjun Singh',
-    age: 29,
-    location: 'Pune, Maharashtra',
-    occupation: 'Investment Banker',
-    education: 'MBA Finance',
-    photos: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Ambitious professional with a passion for finance and travel. I enjoy reading, playing sports, and spending quality time with family and friends.',
-    religion: 'Hindu',
-    caste: 'Rajput'
-  },
-];
 
 const features = [
   {
@@ -129,6 +38,53 @@ const stats = [
 ];
 
 export default function Home() {
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        // Try to fetch from database
+        const response = await fetch('/api/profiles?limit=9');
+        if (response.ok) {
+          const data = await response.json();
+          setProfiles(data.profiles || []);
+        } else {
+          setError('Failed to load profiles');
+        }
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+        setError('Failed to load profiles');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
+
+  const seedDatabase = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/seed', { method: 'POST' });
+      if (response.ok) {
+        // Refetch profiles after seeding
+        const profilesResponse = await fetch('/api/profiles?limit=9');
+        if (profilesResponse.ok) {
+          const data = await profilesResponse.json();
+          setProfiles(data.profiles || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error seeding database:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
       <Header />
@@ -206,9 +162,34 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {demoProfiles.map((profile) => (
-              <ProfileCard key={profile.id} profile={profile} />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 9 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
+                  <div className="w-full h-64 bg-gray-300 rounded-xl mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                </div>
+              ))
+            ) : profiles.length > 0 ? (
+              profiles.map((profile) => (
+                <ProfileCard key={profile.id} profile={profile} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="text-gray-500 mb-4">
+                  <FiUsers className="w-16 h-16 mx-auto mb-4" />
+                  <p className="text-xl mb-2">No profiles found</p>
+                  <p className="mb-6">Get started by adding some demo profiles to the database</p>
+                </div>
+                <button
+                  onClick={seedDatabase}
+                  className="bg-gradient-to-r from-blue-500 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                >
+                  Add Demo Profiles
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-12">

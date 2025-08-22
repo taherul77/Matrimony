@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FiMenu, FiX, FiUser, FiHeart, FiSearch, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiHeart, FiSearch, FiLogOut, FiChevronDown, FiSettings, FiUsers, FiBarChart } from 'react-icons/fi';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +33,21 @@ const Header = () => {
 
     checkAuthStatus();
   }, []);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    if (userDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
 
   const handleLogout = async () => {
     try {
@@ -63,7 +80,7 @@ const Header = () => {
               <FiHeart className="text-white text-xl" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              Matrimony
+              Perfect Pair
             </span>
           </Link>
 
@@ -86,22 +103,75 @@ const Header = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             {isLoggedIn && user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105 focus:outline-none"
+                >
                   <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
                     <FiUser className="text-white text-sm" />
                   </div>
-                  <span className="text-gray-700 font-medium">
+                  <span className="font-medium">
                     Welcome, {user.name}
                   </span>
-                </div>
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-pink-500 transition-all duration-300 hover:scale-105"
-                >
-                  <FiLogOut className="text-sm" />
-                  <span>Logout</span>
+                  <FiChevronDown className={`text-sm transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
+                
+                {/* Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div ref={dropdownRef} className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <p className="text-xs text-blue-600 font-medium mt-1">
+                        {user.role === 'admin' ? 'Administrator' : 'User'}
+                      </p>
+                    </div>
+                    
+                    <div className="py-1">
+                      <Link href="/dashboard" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <FiUser className="mr-3 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                      <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <FiSettings className="mr-3 h-4 w-4" />
+                        My Profile
+                      </Link>
+                      <Link href="/matches" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        <FiHeart className="mr-3 h-4 w-4" />
+                        My Matches
+                      </Link>
+                      
+                      {user.role === 'admin' && (
+                        <>
+                          <div className="border-t border-gray-100 my-1"></div>
+                          <Link href="/admin" className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                            <FiBarChart className="mr-3 h-4 w-4" />
+                            Admin Dashboard
+                          </Link>
+                          <Link href="/admin/users" className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                            <FiUsers className="mr-3 h-4 w-4" />
+                            Manage Users
+                          </Link>
+                          <Link href="/admin/interests" className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50">
+                            <FiHeart className="mr-3 h-4 w-4" />
+                            Manage Interests
+                          </Link>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="border-t border-gray-100 pt-1">
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                      >
+                        <FiLogOut className="mr-3 h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>

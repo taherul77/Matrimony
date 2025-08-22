@@ -14,17 +14,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  password  String
-  name      String
-  gender    String
-  age       Int
-  phone     String?
-  bio       String?
-  createdAt DateTime @default(now())
-  profileId String?  @db.ObjectId
-  matchIds  String[] @db.ObjectId
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  email         String     @unique
+  password      String
+  name          String
+  gender        String
+  age           Int
+  phone         String?
+  bio           String?
+  profileImage  String?    // Added profile image field
+  role          String     @default("user") // "user" or "admin"
+  createdAt     DateTime   @default(now())
+  matchIds      String[]   @db.ObjectId
+  profile       Profile?
+  sentInterests Interest[] @relation("SentInterests")
+  receivedInterests Interest[] @relation("ReceivedInterests")
 }
 
 model Profile {
@@ -37,6 +41,20 @@ model Profile {
   location   String?
   occupation String?
   education  String?
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Interest {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId    String   @db.ObjectId
+  receiverId  String   @db.ObjectId
+  status      String   @default("pending") // "pending", "accepted", "rejected"
+  message     String?
+  createdAt   DateTime @default(now())
+  sender      User     @relation("SentInterests", fields: [senderId], references: [id])
+  receiver    User     @relation("ReceivedInterests", fields: [receiverId], references: [id])
+  
+  @@unique([senderId, receiverId]) // Prevent duplicate interests
 }
 
 model Match {

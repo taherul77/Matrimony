@@ -39,36 +39,14 @@ export default function ViewProfilePage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // For now, we'll use demo data. Later you can replace this with an API call
-        // const response = await fetch(`/api/users/${userId}`);
-        // const data = await response.json();
-        
-        // Demo data for now
-        const demoUser: UserProfile = {
-          id: userId,
-          name: 'Priya Sharma',
-          email: 'priya.sharma@example.com',
-          age: 25,
-          gender: 'female',
-          bio: 'I am a passionate software engineer who loves to travel and explore new places. Looking for someone who shares similar values and goals in life. I enjoy reading, cooking, and spending time with family. I believe in building meaningful relationships based on trust, respect, and understanding.',
-          profile: {
-            id: '1',
-            userId: userId,
-            photos: [
-              'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=500&fit=crop&crop=face',
-              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop&crop=face',
-              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face'
-            ],
-            phone: '+91 98765 43210',
-            religion: 'Hindu',
-            caste: 'Brahmin',
-            location: 'Mumbai, Maharashtra',
-            occupation: 'Software Engineer',
-            education: 'B.Tech Computer Science'
-          }
-        };
-        
-        setUser(demoUser);
+        // Fetch from database API
+        const response = await fetch(`/api/users/${userId}`);
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          console.error('User not found');
+        }
       } catch (error) {
         console.error('Error fetching user profile:', error);
       } finally {
@@ -93,8 +71,45 @@ export default function ViewProfilePage() {
     }
   };
 
+  const [interestMessage, setInterestMessage] = useState('');
+  const [sendingInterest, setSendingInterest] = useState(false);
+
   const handleSendInterest = () => {
     setShowInterestModal(true);
+  };
+
+  const sendInterest = async () => {
+    if (!userId) return;
+    
+    setSendingInterest(true);
+    try {
+      const response = await fetch('/api/interests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: userId,
+          message: interestMessage || 'I am interested in your profile'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Interest sent successfully!');
+        setShowInterestModal(false);
+        setInterestMessage('');
+      } else {
+        alert(data.error || 'Failed to send interest');
+      }
+    } catch (error) {
+      console.error('Error sending interest:', error);
+      alert('Failed to send interest. Please try again.');
+    } finally {
+      setSendingInterest(false);
+    }
   };
 
   const handleLike = () => {
@@ -354,22 +369,36 @@ export default function ViewProfilePage() {
               <h3 className="text-2xl font-bold text-gray-800 mb-2">Send Interest</h3>
               <p className="text-gray-600">Express your interest in {user.name}</p>
             </div>
+            
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Add a personal message (optional)
+              </label>
+              <textarea
+                value={interestMessage}
+                onChange={(e) => setInterestMessage(e.target.value)}
+                placeholder="Write a brief message to introduce yourself..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={3}
+                maxLength={200}
+              />
+              <p className="text-xs text-gray-500 mt-1">{interestMessage.length}/200 characters</p>
+            </div>
+
             <div className="flex space-x-4">
               <button 
                 onClick={() => setShowInterestModal(false)}
-                className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300"
+                disabled={sendingInterest}
+                className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button 
-                onClick={() => {
-                  setShowInterestModal(false);
-                  // Add API call to send interest
-                  alert('Interest sent successfully!');
-                }}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                onClick={sendInterest}
+                disabled={sendingInterest}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
               >
-                Send Interest
+                {sendingInterest ? 'Sending...' : 'Send Interest'}
               </button>
             </div>
           </div>

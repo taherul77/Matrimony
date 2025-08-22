@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FiUser, FiMail, FiLock, FiCalendar, FiMapPin, FiPhone } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiCalendar, FiMapPin, FiPhone, FiCamera } from 'react-icons/fi';
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -17,9 +17,52 @@ const RegistrationForm = () => {
     caste: ''
   });
 
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setProfileImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfileImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setErrors(prev => ({ ...prev, image: 'Please select an image file' }));
+      }
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.url;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -72,22 +115,24 @@ const RegistrationForm = () => {
       setErrors({});
       
       try {
+        // Upload image first if provided
+        let profileImageUrl = '';
+        if (profileImage) {
+          profileImageUrl = await uploadImage(profileImage) || '';
+        }
+
+        const registrationData = {
+          ...formData,
+          age: parseInt(formData.age),
+          profileImage: profileImageUrl
+        };
+
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            age: formData.age,
-            gender: formData.gender,
-            location: formData.location,
-            phone: formData.phone,
-            religion: formData.religion,
-            caste: formData.caste,
-          }),
+          body: JSON.stringify(registrationData),
         });
 
         const data = await response.json();
@@ -153,6 +198,39 @@ const RegistrationForm = () => {
         <div className="grid grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-6">
+            {/* Profile Image Upload */}
+            <div>
+              <label className="block text-gray-700 text-lg font-medium mb-3">
+                Profile Photo
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {profileImagePreview ? (
+                      <img 
+                        src={profileImagePreview} 
+                        alt="Profile preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FiCamera className="w-8 h-8 text-gray-400" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Upload your profile photo</p>
+                  <p className="text-xs text-gray-500">JPG, PNG or GIF (max 5MB)</p>
+                  {uploadingImage && <p className="text-xs text-blue-500">Uploading...</p>}
+                </div>
+              </div>
+              {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
+            </div>
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

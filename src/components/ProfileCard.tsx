@@ -9,11 +9,20 @@ interface ProfileCardProps {
     id: string;
     name: string;
     age: number;
-    location: string;
-    occupation: string;
-    education: string;
-    photos: string[];
-    bio: string;
+    bio?: string;
+    profile?: {
+      location?: string;
+      occupation?: string;
+      education?: string;
+      photos?: string[];
+      religion?: string;
+      caste?: string;
+    };
+    // For backward compatibility with old structure
+    location?: string;
+    occupation?: string;
+    education?: string;
+    photos?: string[];
     religion?: string;
     caste?: string;
   };
@@ -22,13 +31,60 @@ interface ProfileCardProps {
 const ProfileCard = ({ profile }: ProfileCardProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [showInterestModal, setShowInterestModal] = useState(false);
+  const [interestMessage, setInterestMessage] = useState('');
+  const [sendingInterest, setSendingInterest] = useState(false);
+
+  // Get data from either new structure (profile.profile) or old structure (direct)
+  const photos = profile.profile?.photos || profile.photos || [];
+  const location = profile.profile?.location || profile.location || '';
+  const occupation = profile.profile?.occupation || profile.occupation || '';
+  const education = profile.profile?.education || profile.education || '';
+  const religion = profile.profile?.religion || profile.religion || '';
+  const caste = profile.profile?.caste || profile.caste || '';
 
   const nextPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev + 1) % profile.photos.length);
+    if (photos.length > 1) {
+      setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
+    }
   };
 
   const prevPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev - 1 + profile.photos.length) % profile.photos.length);
+    if (photos.length > 1) {
+      setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    }
+  };
+
+  const sendInterest = async () => {
+    setSendingInterest(true);
+    try {
+      const response = await fetch('/api/interests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: profile.id,
+          message: interestMessage || 'I am interested in your profile'
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Interest sent successfully!');
+        setShowInterestModal(false);
+        setInterestMessage('');
+      } else {
+        alert(data.error || 'Failed to send interest');
+      }
+    } catch (error) {
+      console.error('Error sending interest:', error);
+      alert('Failed to send interest. Please try again.');
+    } finally {
+      setSendingInterest(false);
+    }
   };
 
   return (
@@ -36,13 +92,13 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
       {/* Photo Section */}
       <div className="relative h-96 bg-gradient-to-br from-blue-100 to-teal-100">
         <img
-          src={profile.photos[currentPhotoIndex]}
+          src={photos[currentPhotoIndex] || '/placeholder-avatar.jpg'}
           alt={profile.name}
           className="w-full h-full object-cover"
         />
         
         {/* Photo Navigation */}
-        {profile.photos.length > 1 && (
+        {photos.length > 1 && (
           <>
             <button
               onClick={prevPhoto}
@@ -63,7 +119,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
             
             {/* Photo Indicators */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {profile.photos.map((_, index) => (
+              {photos.map((_, index) => (
                 <div
                   key={index}
                   className={`w-2 h-2 rounded-full ${
@@ -102,8 +158,8 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
             <p className="text-gray-600 text-lg">{profile.age} years old</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500 font-medium">{profile.religion}</p>
-            <p className="text-sm text-gray-500">{profile.caste}</p>
+            <p className="text-sm text-gray-500 font-medium">{religion}</p>
+            <p className="text-sm text-gray-500">{caste}</p>
           </div>
         </div>
 
@@ -111,15 +167,15 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
         <div className="space-y-3 mb-6">
           <div className="flex items-center space-x-3 text-gray-600">
             <FiMapPin className="w-5 h-5 text-blue-500" />
-            <span className="text-base font-medium">{profile.location}</span>
+            <span className="text-base font-medium">{location}</span>
           </div>
           <div className="flex items-center space-x-3 text-gray-600">
             <FiBriefcase className="w-5 h-5 text-teal-500" />
-            <span className="text-base font-medium">{profile.occupation}</span>
+            <span className="text-base font-medium">{occupation}</span>
           </div>
           <div className="flex items-center space-x-3 text-gray-600">
             <FiBookOpen className="w-5 h-5 text-cyan-500" />
-            <span className="text-base font-medium">{profile.education}</span>
+            <span className="text-base font-medium">{education}</span>
           </div>
         </div>
 
@@ -133,11 +189,61 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
               View Profile
             </button>
           </Link>
-          <button className="flex-1 border-2 border-blue-500 text-blue-600 py-3 px-4 rounded-full hover:bg-blue-50 hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
+          <button 
+            onClick={() => setShowInterestModal(true)}
+            className="flex-1 border-2 border-blue-500 text-blue-600 py-3 px-4 rounded-full hover:bg-blue-50 hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5"
+          >
             Send Interest
           </button>
         </div>
       </div>
+
+      {/* Interest Modal */}
+      {showInterestModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiHeart className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Send Interest</h3>
+              <p className="text-gray-600">Express your interest in {profile.name}</p>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Add a personal message (optional)
+              </label>
+              <textarea
+                value={interestMessage}
+                onChange={(e) => setInterestMessage(e.target.value)}
+                placeholder="Write a brief message to introduce yourself..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={3}
+                maxLength={200}
+              />
+              <p className="text-xs text-gray-500 mt-1">{interestMessage.length}/200 characters</p>
+            </div>
+
+            <div className="flex space-x-4">
+              <button 
+                onClick={() => setShowInterestModal(false)}
+                disabled={sendingInterest}
+                className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={sendInterest}
+                disabled={sendingInterest}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+              >
+                {sendingInterest ? 'Sending...' : 'Send Interest'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

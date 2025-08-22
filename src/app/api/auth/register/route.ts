@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, age, gender, location, phone, religion, caste } = body;
+    const { name, email, password, age, gender, location, phone, religion, caste, profileImage } = body;
 
     // Validate required fields
     if (!name || !email || !password || !age || !gender || !location) {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Create user first
     const user = await prisma.user.create({
       data: {
         name,
@@ -60,27 +60,21 @@ export async function POST(request: NextRequest) {
         age: parseInt(age),
         gender,
         bio: '',
-        matchIds: []
+        role: 'user'
       }
     });
 
-    // Create profile
-    const profile = await prisma.profile.create({
+    // Create profile separately  
+    await prisma.profile.create({
       data: {
         userId: user.id,
-        photos: [],
+        photos: profileImage ? [profileImage] : [],
         religion: religion || null,
         caste: caste || null,
         location: location || null,
         occupation: null,
         education: null
       }
-    });
-
-    // Update user with profileId
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { profileId: profile.id }
     });
 
     // Return user data without password
