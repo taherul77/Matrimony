@@ -240,7 +240,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
-      <Header />
+   
       
       {/* Hero Banner */}
       <div className="relative bg-gradient-to-r from-blue-600 via-teal-600 to-cyan-600 pt-20 pb-32">

@@ -65,6 +65,14 @@ model Profile {
   location   String?
   occupation String?
   education  String?
+  maritalStatus String?
+  minHeight     Float?
+  maxHeight     Float?
+  minIncome     Int?
+  maxIncome     Int?
+  lifestyle     String?
+  languages     String[]
+  country       String?
   user       User     @relation(fields: [userId], references: [id])
 }
 

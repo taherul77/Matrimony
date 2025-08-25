@@ -37,13 +37,19 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id }
     });
 
+    // Get preferences
+    const preferences = await prisma.userPreference.findUnique({
+      where: { userId: user.id }
+    });
+
     // Remove password from user object
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json(
       { 
         user: userWithoutPassword,
-        profile: profile || null
+        profile: profile || null,
+        preferences: preferences || null
       },
       { status: 200 }
     );

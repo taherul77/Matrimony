@@ -68,7 +68,7 @@ export default function MatchesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-      <Header />
+     
       
       <div className="pt-20 pb-16 px-4">
         <div className="container mx-auto max-w-6xl">

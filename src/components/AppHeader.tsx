@@ -55,6 +55,12 @@ const AppHeader: React.FC = () => {
             <FiMenu className="w-5 h-5" />
           </button>
           <span className="font-bold text-lg">Dashboard</span>
+          <div className="hidden lg:block">
+            <button  onClick={() => router.push("/")} className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all">
+            
+              <span className="font-medium">Home</span>
+            </button>
+          </div>
         </div>
         <div className="flex items-center space-x-3">
           {user && (
