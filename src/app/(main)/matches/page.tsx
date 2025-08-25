@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
-import Header from '../../components/Header';
-import ProfileCard from '../../components/ProfileCard';
-import { FiHeart, FiFilter, FiGrid, FiList } from 'react-icons/fi';
+
+import ProfileCard from '@/components/ProfileCard';
+import { FiHeart, FiGrid, FiList } from 'react-icons/fi';
 
 
 import { useEffect } from 'react';
@@ -21,16 +21,10 @@ export default function MatchesPage() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('/api/profiles?limit=12');
+        const res = await fetch('/api/matches?limit=12');
         if (!res.ok) throw new Error('Failed to fetch matches');
         const data = await res.json();
-        // Add a fake matchPercentage for demo (real app: calculate based on user)
-        setMatches(
-          (data.profiles || []).map((p: any) => ({
-            ...p,
-            matchPercentage: Math.floor(Math.random() * 21) + 80 // 80-100%
-          }))
-        );
+        setMatches(data.profiles || []);
       } catch (err: any) {
         setError(err.message || 'Unknown error');
       } finally {

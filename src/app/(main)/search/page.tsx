@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
-import SearchFilter from '../../components/SearchFilter';
-import ProfileCard from '../../components/ProfileCard';
-import { FiGrid, FiList, FiHeart } from 'react-icons/fi';
+
+import SearchFilter from '@/components/SearchFilter';
+import ProfileCard from '@/components/ProfileCard';
+import { FiGrid, FiList } from 'react-icons/fi';
 
 
 import { useEffect } from 'react';
@@ -37,7 +37,7 @@ export default function SearchPage() {
       if ((filters as any).occupation) params.append('occupation', (filters as any).occupation);
       if ((filters as any).gender) params.append('gender', (filters as any).gender);
   if ((filters as any).keyword) params.append('keyword', (filters as any).keyword);
-  const res = await fetch(`/api/profiles?${params.toString()}`);
+  const res = await fetch(`/api/search?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch profiles');
       const data = await res.json();
       if (append) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Header from '../../../components/Header';
+
 import Link from 'next/link';
 import { FiArrowLeft, FiHeart, FiX, FiMapPin, FiBriefcase, FiBookOpen, FiUser, FiMail, FiPhone, FiShare, FiFlag } from 'react-icons/fi';
 
@@ -143,7 +143,7 @@ export default function ViewProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
-      <Header />
+      
       
       {/* Navigation */}
       <div className="pt-20 pb-4 px-4">

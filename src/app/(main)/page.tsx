@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '../components/Header';
-import ProfileCard from '../components/ProfileCard';
+
+import ProfileCard from '@/components/ProfileCard';
 import Link from 'next/link';
 /* eslint-disable @next/next/no-img-element */
 import { FiHeart, FiUsers, FiShield, FiStar, FiMapPin, FiCheckCircle } from 'react-icons/fi';
@@ -58,7 +58,7 @@ export default function Home() {
       }
     };
     checkLogin();
-  }, []);
+    }, []);
 
   useEffect(() => {
     const fetchProfiles = async () => {

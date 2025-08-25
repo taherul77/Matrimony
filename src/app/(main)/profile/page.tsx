@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect } from 'react';
-import Header from '../../components/Header';
+
 import Link from 'next/link';
 import { FiEdit, FiCamera, FiMapPin, FiBriefcase, FiBookOpen, FiHeart, FiUser, FiMail, FiPhone, FiSave, FiSearch } from 'react-icons/fi';
 
