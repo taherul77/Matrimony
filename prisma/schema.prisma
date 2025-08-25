@@ -27,8 +27,32 @@ model User {
   createdAt     DateTime   @default(now())
   matchIds      String[]   @db.ObjectId
   profile       Profile?
+  preferences   UserPreference?
   sentInterests Interest[] @relation("SentInterests")
   receivedInterests Interest[] @relation("ReceivedInterests")
+}
+
+model UserPreference {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @unique @db.ObjectId
+  minAge        Int?
+  maxAge        Int?
+  gender        String?
+  religion      String?
+  caste         String?
+  location      String?
+  maritalStatus String?
+  minHeight     Float?
+  maxHeight     Float?
+  education     String?
+  occupation    String?
+  minIncome     Int?
+  maxIncome     Int?
+  lifestyle     String?
+  languages     String[]
+  country       String?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
 }
 
 model Profile {

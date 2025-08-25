@@ -6,79 +6,41 @@ import Header from '../../components/Header';
 import ProfileCard from '../../components/ProfileCard';
 import { FiHeart, FiFilter, FiGrid, FiList } from 'react-icons/fi';
 
-// Demo matches data
-const demoMatches = [
-  {
-    id: '1',
-    name: 'Priya Sharma',
-    age: 25,
-    location: 'Mumbai, Maharashtra',
-    occupation: 'Software Engineer',
-    education: 'B.Tech Computer Science',
-    photos: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'I am a passionate software engineer who loves to travel and explore new places. Looking for someone who shares similar values and goals in life.',
-    religion: 'Hindu',
-    caste: 'Brahmin',
-    matchPercentage: 95
-  },
-  {
-    id: '2',
-    name: 'Aisha Khan',
-    age: 27,
-    location: 'Delhi, NCR',
-    occupation: 'Marketing Manager',
-    education: 'MBA Marketing',
-    photos: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Creative and ambitious marketing professional who enjoys reading, cooking, and spending time with family. Seeking a life partner who is kind and family-oriented.',
-    religion: 'Muslim',
-    caste: 'Sunni',
-    matchPercentage: 88
-  },
-  {
-    id: '3',
-    name: 'Sarah Thomas',
-    age: 26,
-    location: 'Chennai, Tamil Nadu',
-    occupation: 'Doctor',
-    education: 'MBBS, MD',
-    photos: [
-      'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Dedicated doctor with a passion for helping others. I love music, dance, and spending time with friends. Seeking a partner who is caring and understanding.',
-    religion: 'Christian',
-    caste: 'Syrian Christian',
-    matchPercentage: 92
-  },
-  {
-    id: '4',
-    name: 'Meera Reddy',
-    age: 24,
-    location: 'Hyderabad, Telangana',
-    occupation: 'UX Designer',
-    education: 'B.Des Design',
-    photos: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=500&fit=crop&crop=face',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=500&fit=crop&crop=face'
-    ],
-    bio: 'Creative designer who loves art, photography, and exploring new cultures. Looking for someone who appreciates creativity and has a zest for life.',
-    religion: 'Hindu',
-    caste: 'Reddy',
-    matchPercentage: 85
-  }
-];
+
+import { useEffect } from 'react';
 
 export default function MatchesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('matchPercentage');
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const sortedMatches = [...demoMatches].sort((a, b) => {
+  useEffect(() => {
+    const fetchMatches = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch('/api/profiles?limit=12');
+        if (!res.ok) throw new Error('Failed to fetch matches');
+        const data = await res.json();
+        // Add a fake matchPercentage for demo (real app: calculate based on user)
+        setMatches(
+          (data.profiles || []).map((p: any) => ({
+            ...p,
+            matchPercentage: Math.floor(Math.random() * 21) + 80 // 80-100%
+          }))
+        );
+      } catch (err: any) {
+        setError(err.message || 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMatches();
+  }, []);
+
+  const sortedMatches = [...matches].sort((a, b) => {
     if (sortBy === 'matchPercentage') {
       return b.matchPercentage - a.matchPercentage;
     }
@@ -87,6 +49,22 @@ export default function MatchesPage() {
     }
     return 0;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded shadow text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">

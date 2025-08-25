@@ -7,6 +7,7 @@ import { FiHeart, FiMapPin, FiBriefcase, FiBookOpen, FiStar } from 'react-icons/
 interface ProfileCardProps {
   profile: {
     id: string;
+    userId?: string;
     name: string;
     age: number;
     bio?: string;
@@ -184,7 +185,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-          <Link href={`/profile/${profile.id}`} className="flex-1">
+          <Link href={`/profile/${profile.userId || profile.id}`} className="flex-1">
             <button className="w-full bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-4 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5">
               View Profile
             </button>

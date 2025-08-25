@@ -1,4 +1,5 @@
-'use client';
+  'use client';
+
 
 import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
@@ -14,6 +15,26 @@ interface User {
   bio?: string;
 }
 
+
+interface UserPreference {
+  minAge?: number;
+  maxAge?: number;
+  gender?: string;
+  religion?: string;
+  caste?: string;
+  location?: string;
+  maritalStatus?: string;
+  minHeight?: number;
+  maxHeight?: number;
+  education?: string;
+  occupation?: string;
+  minIncome?: number;
+  maxIncome?: number;
+  lifestyle?: string;
+  languages?: string[];
+  country?: string;
+}
+
 interface Profile {
   id: string;
   userId: string;
@@ -27,8 +48,11 @@ interface Profile {
 }
 
 export default function ProfilePage() {
+  // ...existing state and handlers...
+
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [preferences, setPreferences] = useState<UserPreference | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,6 +66,24 @@ export default function ProfilePage() {
     occupation: '',
     education: ''
   });
+  const [prefForm, setPrefForm] = useState<UserPreference>({
+    minAge: undefined,
+    maxAge: undefined,
+    gender: '',
+    religion: '',
+    caste: '',
+    location: '',
+    maritalStatus: '',
+    minHeight: undefined,
+    maxHeight: undefined,
+    education: '',
+    occupation: '',
+    minIncome: undefined,
+    maxIncome: undefined,
+    lifestyle: '',
+    languages: [],
+    country: '',
+  });
 
   useEffect(() => {
     fetchProfile();
@@ -54,6 +96,7 @@ export default function ProfilePage() {
         const data = await response.json();
         setUser(data.user);
         setProfile(data.profile);
+        setPreferences(data.preferences || null);
         setFormData({
           name: data.user.name || '',
           bio: data.user.bio || '',
@@ -63,6 +106,24 @@ export default function ProfilePage() {
           occupation: data.profile?.occupation || '',
           education: data.profile?.education || ''
         });
+        setPrefForm({
+          minAge: data.preferences?.minAge ?? '',
+          maxAge: data.preferences?.maxAge ?? '',
+          gender: data.preferences?.gender ?? '',
+          religion: data.preferences?.religion ?? '',
+          caste: data.preferences?.caste ?? '',
+          location: data.preferences?.location ?? '',
+          maritalStatus: data.preferences?.maritalStatus ?? '',
+          minHeight: data.preferences?.minHeight ?? '',
+          maxHeight: data.preferences?.maxHeight ?? '',
+          education: data.preferences?.education ?? '',
+          occupation: data.preferences?.occupation ?? '',
+          minIncome: data.preferences?.minIncome ?? '',
+          maxIncome: data.preferences?.maxIncome ?? '',
+          lifestyle: data.preferences?.lifestyle ?? '',
+          languages: data.preferences?.languages ?? [],
+          country: data.preferences?.country ?? '',
+        });
       } else {
         console.error('Failed to fetch profile');
       }
@@ -70,6 +131,43 @@ export default function ProfilePage() {
       console.error('Error fetching profile:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+  const handlePrefChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setPrefForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePrefNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPrefForm(prev => ({ ...prev, [name]: value === '' ? undefined : Number(value) }));
+  };
+
+  // Handle comma-separated languages input for preferences
+  const handlePrefLanguagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setPrefForm(prev => ({ ...prev, languages: value.split(',').map(l => l.trim()).filter(Boolean) }));
+  };
+
+  const handleSavePreferences = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/profile/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prefForm),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPreferences(data.preferences);
+        setIsEditing(false);
+      } else {
+        console.error('Failed to update preferences');
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -189,11 +287,11 @@ export default function ProfilePage() {
           </div>
         </div>
         {/* Decorative Elements */}
-        <div className="absolute bottom-0 left-0 w-full overflow-hidden">
+        {/* <div className="absolute bottom-0 left-0 w-full overflow-hidden">
           <svg className="relative block w-full h-12" viewBox="0 0 1200 120" preserveAspectRatio="none">
             <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="rgb(249, 250, 251)"></path>
           </svg>
-        </div>
+        </div> */}
       </div>
 
       {/* Profile Content */}
@@ -302,6 +400,275 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Details Section */}
+           
+            <div className="p-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-yellow-500 rounded-lg flex items-center justify-center mr-3">
+                  <FiHeart className="w-4 h-4 text-white" />
+                </div>
+                Match Preferences
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Gender</label>
+                    {isEditing ? (
+                      <select
+                        name="gender"
+                        value={prefForm.gender}
+                        onChange={handlePrefChange}
+                        className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      >
+                        <option value="">Any</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    ) : (
+                      <p className="text-gray-800 font-medium">{preferences?.gender || 'Any'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Religion</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="religion"
+                        value={prefForm.religion}
+                        onChange={handlePrefChange}
+                        className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Any religion"
+                      />
+                    ) : (
+                      <p className="text-gray-800 font-medium">{preferences?.religion || 'Any'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Caste</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="caste"
+                        value={prefForm.caste}
+                        onChange={handlePrefChange}
+                        className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Any caste"
+                      />
+                    ) : (
+                      <p className="text-gray-800 font-medium">{preferences?.caste || 'Any'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Location</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="location"
+                        value={prefForm.location}
+                        onChange={handlePrefChange}
+                        className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Any location"
+                      />
+                    ) : (
+                      <p className="text-gray-800 font-medium">{preferences?.location || 'Any'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Age Range</label>
+                    {isEditing ? (
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="number"
+                          name="minAge"
+                          value={prefForm.minAge ?? ''}
+                          onChange={handlePrefNumberChange}
+                          className="w-20 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                          placeholder="Min"
+                          min={18}
+                        />
+                        <span>-</span>
+                        <input
+                          type="number"
+                          name="maxAge"
+                          value={prefForm.maxAge ?? ''}
+                          onChange={handlePrefNumberChange}
+                          className="w-20 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                          placeholder="Max"
+                          min={18}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-gray-800 font-medium">
+                        {preferences?.minAge || 'Any'} - {preferences?.maxAge || 'Any'}
+                      </p>
+                    )}
+                  </div>
+                   <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Marital Status</label>
+                  {isEditing ? (
+                    <select
+                      name="maritalStatus"
+                      value={prefForm.maritalStatus}
+                      onChange={handlePrefChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                    >
+                      <option value="">Any</option>
+                      <option value="single">Single</option>
+                      <option value="divorced">Divorced</option>
+                      <option value="widowed">Widowed</option>
+                    </select>
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.maritalStatus || 'Any'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Height (cm)</label>
+                  {isEditing ? (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        name="minHeight"
+                        value={prefForm.minHeight ?? ''}
+                        onChange={handlePrefNumberChange}
+                        className="w-20 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Min"
+                        min={100}
+                      />
+                      <span>-</span>
+                      <input
+                        type="number"
+                        name="maxHeight"
+                        value={prefForm.maxHeight ?? ''}
+                        onChange={handlePrefNumberChange}
+                        className="w-20 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Max"
+                        min={100}
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-gray-800 font-medium">
+                      {preferences?.minHeight || 'Any'} - {preferences?.maxHeight || 'Any'}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Education</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="education"
+                      value={prefForm.education}
+                      onChange={handlePrefChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      placeholder="Any education"
+                    />
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.education || 'Any'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Occupation</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="occupation"
+                      value={prefForm.occupation}
+                      onChange={handlePrefChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      placeholder="Any occupation"
+                    />
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.occupation || 'Any'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Preferred Income Range</label>
+                  {isEditing ? (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        name="minIncome"
+                        value={prefForm.minIncome ?? ''}
+                        onChange={handlePrefNumberChange}
+                        className="w-24 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Min"
+                        min={0}
+                      />
+                      <span>-</span>
+                      <input
+                        type="number"
+                        name="maxIncome"
+                        value={prefForm.maxIncome ?? ''}
+                        onChange={handlePrefNumberChange}
+                        className="w-24 text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                        placeholder="Max"
+                        min={0}
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-gray-800 font-medium">
+                      {preferences?.minIncome || 'Any'} - {preferences?.maxIncome || 'Any'}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Lifestyle</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="lifestyle"
+                      value={prefForm.lifestyle}
+                      onChange={handlePrefChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      placeholder="e.g. Vegetarian, Non-smoker"
+                    />
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.lifestyle || 'Any'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Languages</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="languages"
+                      value={prefForm.languages?.join(', ') || ''}
+                      onChange={handlePrefLanguagesChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      placeholder="e.g. English, Hindi, Bengali"
+                    />
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.languages?.join(', ') || 'Any'}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Country</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="country"
+                      value={prefForm.country}
+                      onChange={handlePrefChange}
+                      className="w-full text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+                      placeholder="Any country"
+                    />
+                  ) : (
+                    <p className="text-gray-800 font-medium">{preferences?.country || 'Any'}</p>
+                  )}
+                </div>
+                </div>
+                {isEditing && (
+                  <button
+                    onClick={handleSavePreferences}
+                    disabled={isSaving}
+                    className="mt-4 px-6 py-2 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 transition-all disabled:bg-gray-400"
+                  >
+                    {isSaving ? 'Saving...' : 'Save Preferences'}
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="p-8">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 

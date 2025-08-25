@@ -41,6 +41,24 @@ export default function Home() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check login status via /api/me (server-side, works with HttpOnly cookies)
+    const checkLogin = async () => {
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        setIsLoggedIn(data.isLoggedIn);
+        setUser(data.user || null);
+      } catch {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    };
+    checkLogin();
+  }, []);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -102,11 +120,19 @@ export default function Home() {
               Start your journey to forever love today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 transition-all duration-300">
-                  Start Your Journey
-                </button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/profile">
+                  <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 transition-all duration-300">
+                    Go to Dashboard
+                  </button>
+                </Link>
+              ) : (
+                <Link href="/register">
+                  <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 transition-all duration-300">
+                    Start Your Journey
+                  </button>
+                </Link>
+              )}
               <Link href="/search">
                 <button className="border-2 border-pink-500 text-pink-500 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 hover:scale-105 transition-all duration-300">
                   Learn More

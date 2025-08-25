@@ -116,27 +116,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new interest
+    // Create new interest (no include)
     const interest = await prisma.interest.create({
       data: {
         senderId,
         receiverId,
         message: message || '',
         status: 'pending'
-      },
-      include: {
-        sender: {
-          select: { id: true, name: true, email: true }
-        },
-        receiver: {
-          select: { id: true, name: true, email: true }
-        }
       }
     });
 
-    return NextResponse.json({ 
+    // Fetch sender and receiver for response
+    const sender = await prisma.user.findUnique({ where: { id: senderId }, select: { id: true, name: true, email: true } });
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId }, select: { id: true, name: true, email: true } });
+
+    return NextResponse.json({
       message: 'Interest sent successfully',
-      data: interest
+      data: {
+        ...interest,
+        sender,
+        receiver
+      }
     }, { status: 201 });
 
   } catch (error) {

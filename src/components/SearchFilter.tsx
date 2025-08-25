@@ -10,6 +10,7 @@ interface SearchFilterProps {
 const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filters, setFilters] = useState({
+    keyword: '',
     ageFrom: '',
     ageTo: '',
     location: '',
@@ -26,6 +27,11 @@ const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
     onFilterChange(newFilters);
   };
 
+  // Handle search input change
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFilterChange('keyword', e.target.value);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       {/* Search Bar */}
@@ -36,6 +42,8 @@ const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
             type="text"
             placeholder="Search by name, location, or keywords..."
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            value={filters.keyword}
+            onChange={handleSearchInput}
           />
         </div>
         <button
@@ -173,6 +181,7 @@ const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
                               <button
                   onClick={() => {
                     setFilters({
+                      keyword: '',
                       ageFrom: '',
                       ageTo: '',
                       location: '',
