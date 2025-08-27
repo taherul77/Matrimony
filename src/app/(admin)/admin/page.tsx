@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FiUsers, FiUserPlus, FiEye, FiTrash2, FiSearch } from 'react-icons/fi';
-import DashboardLayout from '@/components/DashboardLayout';
+
 
 interface User {
   id: string;

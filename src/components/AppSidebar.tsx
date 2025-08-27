@@ -1,6 +1,6 @@
 import React from "react";
 import { useSidebar } from "../context/SidebarContext";
-import { FiHome, FiUser, FiSearch, FiHeart, FiUsers, FiBarChart, FiSettings } from "react-icons/fi";
+import { FiHome, FiUser, FiSearch, FiHeart, FiUsers, FiBarChart, FiSettings,FiPackage } from "react-icons/fi";
 import Link from "next/link";
 
 const AppSidebar: React.FC = () => {
@@ -28,6 +28,7 @@ const AppSidebar: React.FC = () => {
   const adminMenu = [
     { label: "Admin Dashboard", icon: FiBarChart, href: "/admin" },
     { label: "Manage Users", icon: FiUsers, href: "/admin/users" },
+    { label: "Manage Packages", icon: FiPackage, href: "/admin/packages" },
     { label: "Manage Interests", icon: FiHeart, href: "/admin/interests" },
     { label: "Settings", icon: FiSettings, href: "/admin/settings" },
   ];
