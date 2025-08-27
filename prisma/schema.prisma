@@ -1,3 +1,4 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -95,4 +96,13 @@ model Match {
   userBId   String   @db.ObjectId
   status    String   // e.g., "pending", "accepted", "rejected"
   createdAt DateTime @default(now())
+}
+model Package {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  price     Float
+  duration  Int      // in days
+  features  String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

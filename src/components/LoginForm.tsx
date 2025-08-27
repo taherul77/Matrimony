@@ -63,7 +63,7 @@ const LoginForm = () => {
         
         // Redirect to dashboard or home page
         setTimeout(() => {
-          router.push('/matches'); // or wherever you want to redirect after login
+          router.push('/'); 
         }, 1500);
       } else {
         setErrors({ general: data.error || 'Login failed' });

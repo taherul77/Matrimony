@@ -27,7 +27,6 @@ export async function GET(request: Request) {
     if (searchParams.get("keyword")) {
       const keyword = searchParams.get("keyword") || "";
       where.OR = [
-        // Profile fields
         { location: { contains: keyword, mode: "insensitive" } },
         { occupation: { contains: keyword, mode: "insensitive" } },
         { education: { contains: keyword, mode: "insensitive" } },
@@ -37,22 +36,7 @@ export async function GET(request: Request) {
         { lifestyle: { contains: keyword, mode: "insensitive" } },
         { country: { contains: keyword, mode: "insensitive" } },
         { languages: { has: keyword } },
-        { phone: { contains: keyword, mode: "insensitive" } },
-        { photos: { has: keyword } },
-        // User fields
         { user: { name: { contains: keyword, mode: "insensitive" } } },
-        { user: { email: { contains: keyword, mode: "insensitive" } } },
-        { user: { gender: { contains: keyword, mode: "insensitive" } } },
-        { user: { bio: { contains: keyword, mode: "insensitive" } } },
-        { user: { phone: { contains: keyword, mode: "insensitive" } } },
-        { user: { profileImage: { contains: keyword, mode: "insensitive" } } },
-        { user: { role: { contains: keyword, mode: "insensitive" } } },
-        // Numeric fields as string match
-        { minHeight: { equals: parseFloat(keyword) || undefined } },
-        { maxHeight: { equals: parseFloat(keyword) || undefined } },
-        { minIncome: { equals: parseInt(keyword) || undefined } },
-        { maxIncome: { equals: parseInt(keyword) || undefined } },
-        { user: { age: { equals: parseInt(keyword) || undefined } } },
       ];
     }
     // Age filter (if you want to support it)

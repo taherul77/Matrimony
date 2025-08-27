@@ -98,6 +98,9 @@ const Header = () => {
             <Link href="/profile" className="text-gray-700 hover:text-pink-500 transition-colors">
               Profile
             </Link>
+            <Link href="/packages" className="text-gray-700 hover:text-pink-500 transition-colors">
+              Packages
+            </Link>
           </nav>
 
           {/* Desktop Auth Buttons */}
@@ -213,6 +216,9 @@ const Header = () => {
               </Link>
               <Link href="/profile" className="text-gray-700 hover:text-pink-500 transition-colors">
                 Profile
+              </Link>
+              <Link href="/packages" className="text-gray-700 hover:text-pink-500 transition-colors">
+                Packages
               </Link>
               
               {isLoggedIn && user ? (
