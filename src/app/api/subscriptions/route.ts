@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
 // Get current user subscription
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    // Get user from session cookies
+    const cookieStore = await cookies();
+    const userCookie = cookieStore.get('user');
     
+    if (!userCookie) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    let currentUser;
+    try {
+      currentUser = JSON.parse(userCookie.value);
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const userId = currentUser.id;
+
     if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -28,8 +43,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ subscription: user.subscription });
+    return NextResponse.json({ 
+      subscription: user.subscription,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
   } catch (error) {
+    console.error("Subscription fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch subscription" }, { status: 500 });
   }
 }
@@ -37,10 +60,31 @@ export async function GET(req: Request) {
 // Subscribe to a package
 export async function POST(req: Request) {
   try {
-    const { userId, packageId } = await req.json();
+    // Get user from session cookies
+    const cookieStore = await cookies();
+    const userCookie = cookieStore.get('user');
     
-    if (!userId || !packageId) {
-      return NextResponse.json({ error: "User ID and Package ID required" }, { status: 400 });
+    if (!userCookie) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    let currentUser;
+    try {
+      currentUser = JSON.parse(userCookie.value);
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const userId = currentUser.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
+    }
+
+    const { packageId } = await req.json();
+    
+    if (!packageId) {
+      return NextResponse.json({ error: "Package ID required" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({

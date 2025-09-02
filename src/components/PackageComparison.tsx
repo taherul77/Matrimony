@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import { FiX, FiCheck, FiStar, FiHeart, FiEye, FiLock, FiMessageSquare, FiUsers, FiCamera } from 'react-icons/fi';
+import { FiX, FiCheck, FiStar, FiHeart, FiEye, FiLock, FiMessageSquare, FiUsers, FiCamera, FiPhone, FiMail, FiSearch, FiShield, FiEyeOff, FiZap, FiHeadphones, FiCalendar, FiAward } from 'react-icons/fi';
 import { HiSparkles } from 'react-icons/hi';
-import { FaCrown } from 'react-icons/fa';
+import { FaCrown, FaUserTie, FaHeart, FaGlobe } from 'react-icons/fa';
 
 interface PackageComparisonProps {
   isOpen: boolean;
@@ -36,43 +36,53 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
       color: 'gray',
       bgColor: 'bg-gray-50',
       textColor: 'text-gray-600',
-      borderColor: 'border-gray-200'
+      borderColor: 'border-gray-200',
+      badge: '✅',
+      description: 'Get started with basic features'
     },
     {
       name: 'Silver',
-      price: '₹999',
+      price: '₹500',
       period: 'per month',
       color: 'blue',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      borderColor: 'border-blue-200'
+      borderColor: 'border-blue-200',
+      badge: '⚪',
+      description: 'Affordable entry-level premium'
     },
     {
       name: 'Gold',
-      price: '₹1,999',
+      price: '₹1,500',
       period: 'per month',
       color: 'yellow',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
-      borderColor: 'border-yellow-200'
+      borderColor: 'border-yellow-200',
+      badge: '🟡',
+      description: 'Mid-range premium features'
     },
     {
       name: 'Platinum',
-      price: '₹2,999',
+      price: '₹2,500',
       period: 'per month',
       color: 'purple',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      borderColor: 'border-purple-200'
+      borderColor: 'border-purple-200',
+      badge: '🔵',
+      description: 'Higher premium tier'
     },
     {
       name: 'VIP',
-      price: '₹4,999',
+      price: '₹5,000',
       period: 'per month',
       color: 'pink',
       bgColor: 'bg-gradient-to-br from-pink-50 to-purple-50',
       textColor: 'text-pink-600',
-      borderColor: 'border-pink-200'
+      borderColor: 'border-pink-200',
+      badge: '🔴',
+      description: 'Premium exclusive tier'
     }
   ];
 
@@ -89,72 +99,90 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
     {
       name: 'Photo Uploads',
       icon: <FiCamera className="w-4 h-4" />,
-      free: '2 photos',
-      silver: '5 photos',
-      gold: '10 photos',
-      platinum: '15 photos',
+      free: '1-2 photos',
+      silver: 'Up to 5',
+      gold: 'Unlimited',
+      platinum: 'Unlimited',
       vip: 'Unlimited'
     },
     {
-      name: 'Daily Interests',
-      icon: <FiHeart className="w-4 h-4" />,
-      free: '3 per day',
-      silver: '10 per day',
-      gold: '25 per day',
-      platinum: '50 per day',
-      vip: 'Unlimited'
-    },
-    {
-      name: 'Monthly Messages',
-      icon: <FiMessageSquare className="w-4 h-4" />,
-      free: 'Receive only',
-      silver: '50 messages',
-      gold: '150 messages',
-      platinum: '300 messages',
-      vip: 'Unlimited'
-    },
-    {
-      name: 'View Contact Details',
-      icon: <FiEye className="w-4 h-4" />,
-      free: false,
-      silver: false,
-      gold: '10 per month',
-      platinum: '50 per month',
-      vip: 'Unlimited'
-    },
-    {
-      name: 'Direct Messaging',
-      icon: <FiMessageSquare className="w-4 h-4" />,
-      free: false,
-      silver: 'Limited',
-      gold: true,
-      platinum: true,
-      vip: true
-    },
-    {
-      name: 'Advanced Search',
-      icon: <FiStar className="w-4 h-4" />,
-      free: false,
-      silver: false,
-      gold: true,
-      platinum: true,
-      vip: true
-    },
-    {
-      name: 'Profile Highlight',
-      icon: <HiSparkles className="w-4 h-4" />,
-      free: false,
+      name: 'Basic Search & Browse',
+      icon: <FiSearch className="w-4 h-4" />,
+      free: true,
       silver: true,
       gold: true,
       platinum: true,
       vip: true
     },
     {
-      name: 'Featured Profile',
+      name: 'Send Interests per Day',
+      icon: <FiHeart className="w-4 h-4" />,
+      free: '2-3 per day',
+      silver: 'Up to 20',
+      gold: 'Unlimited',
+      platinum: 'Unlimited',
+      vip: 'Unlimited'
+    },
+    {
+      name: 'Receive Messages',
+      icon: <FiMessageSquare className="w-4 h-4" />,
+      free: 'Premium only',
+      silver: true,
+      gold: true,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'Direct Messaging',
+      icon: <FiMessageSquare className="w-4 h-4" />,
+      free: false,
+      silver: '10 per month',
+      gold: 'Unlimited',
+      platinum: 'Unlimited',
+      vip: 'Unlimited'
+    },
+    {
+      name: 'View Contact Details',
+      icon: <FiPhone className="w-4 h-4" />,
+      free: false,
+      silver: 'Partially masked',
+      gold: 'Full details',
+      platinum: 'Full details',
+      vip: 'Full details'
+    },
+    {
+      name: 'Priority in Search',
+      icon: <FiZap className="w-4 h-4" />,
+      free: false,
+      silver: 'Lower level',
+      gold: 'Higher priority',
+      platinum: 'Top results',
+      vip: 'Top results'
+    },
+    {
+      name: 'Featured Profiles',
       icon: <FiStar className="w-4 h-4" />,
       free: false,
       silver: false,
-      gold: false,
+      gold: true,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'Advanced Search Filters',
+      icon: <FiSearch className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: true,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'Profile Highlighting',
+      icon: <HiSparkles className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: true,
       platinum: true,
       vip: true
     },
@@ -164,12 +192,48 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
       free: false,
       silver: false,
       gold: false,
-      platinum: false,
+      platinum: true,
       vip: true
     },
     {
-      name: 'Priority Support',
-      icon: <FiStar className="w-4 h-4" />,
+      name: 'Weekly Profile Boost',
+      icon: <FiZap className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'Dedicated Support',
+      icon: <FiHeadphones className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: true,
+      vip: '24/7 Priority'
+    },
+    {
+      name: 'Compatibility Matching',
+      icon: <FaHeart className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'Browse Privately',
+      icon: <FiEyeOff className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: true,
+      vip: true
+    },
+    {
+      name: 'View Profile Visitors',
+      icon: <FiEye className="w-4 h-4" />,
       free: false,
       silver: false,
       gold: false,
@@ -178,12 +242,48 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
     },
     {
       name: 'Personal Matchmaker',
+      icon: <FaUserTie className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: false,
+      vip: true
+    },
+    {
+      name: 'Handpicked Matches',
       icon: <FiUsers className="w-4 h-4" />,
       free: false,
       silver: false,
       gold: false,
       platinum: false,
       vip: true
+    },
+    {
+      name: 'Event Access',
+      icon: <FiCalendar className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: false,
+      vip: 'Exclusive events'
+    },
+    {
+      name: 'Profile Promotion',
+      icon: <FiAward className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: false,
+      vip: 'Newsletters & ads'
+    },
+    {
+      name: 'Complete Privacy Control',
+      icon: <FiShield className="w-4 h-4" />,
+      free: false,
+      silver: false,
+      gold: false,
+      platinum: 'Basic',
+      vip: 'Complete'
     }
   ];
 
@@ -243,15 +343,17 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
               {packages.map((pkg) => (
                 <div 
                   key={pkg.name}
-                  className={`text-center p-4 rounded-xl ${pkg.bgColor} ${pkg.borderColor} border-2 ${getPackageBorder(pkg.name)}`}
+                  className={`text-center p-4 rounded-xl ${pkg.bgColor} ${pkg.borderColor} border-2 ${getPackageBorder(pkg.name)} relative overflow-hidden`}
                 >
                   <div className="mb-3">
+                    <div className="text-2xl mb-2">{pkg.badge}</div>
                     {pkg.name === 'VIP' && <FaCrown className="w-6 h-6 text-pink-500 mx-auto mb-2" />}
                     {pkg.name === 'Platinum' && <HiSparkles className="w-6 h-6 text-purple-500 mx-auto mb-2" />}
                     {pkg.name === 'Gold' && <FiStar className="w-6 h-6 text-yellow-500 mx-auto mb-2" />}
                     {pkg.name === 'Silver' && <FiStar className="w-6 h-6 text-blue-500 mx-auto mb-2" />}
                   </div>
                   <h4 className={`text-xl font-bold ${pkg.textColor} mb-1`}>{pkg.name}</h4>
+                  <div className="text-xs text-gray-500 mb-2">{pkg.description}</div>
                   <div className={`text-2xl font-bold ${pkg.textColor} mb-1`}>{pkg.price}</div>
                   <div className="text-sm text-gray-500">{pkg.period}</div>
                   {currentPackage.toLowerCase() === pkg.name.toLowerCase() && (
@@ -263,6 +365,11 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
                     <button className={`mt-2 w-full bg-gradient-to-r from-${pkg.color}-500 to-${pkg.color}-600 text-white text-sm py-2 px-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300`}>
                       Upgrade
                     </button>
+                  )}
+                  {pkg.name === 'VIP' && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-pink-500 to-purple-500 text-white text-xs py-1 px-2 rounded-bl-lg">
+                      MOST POPULAR
+                    </div>
                   )}
                 </div>
               ))}

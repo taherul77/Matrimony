@@ -8,13 +8,28 @@ const prisma = new PrismaClient();
 // GET /api/business/features - Get user's current package features
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    // Get user from cookies
+    const cookies = request.headers.get('cookie');
+    const userCookie = cookies?.split(';')
+      .find(c => c.trim().startsWith('user='))
+      ?.split('=')[1];
+
+    if (!userCookie) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
+    let currentUser;
+    try {
+      currentUser = JSON.parse(decodeURIComponent(userCookie));
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    if (!currentUser?.id) {
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
+    }
+
+    const userId = currentUser.id;
     const permissions = await getUserPermissions(userId);
     
     // Get current usage

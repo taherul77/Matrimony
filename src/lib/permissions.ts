@@ -41,15 +41,15 @@ export async function getUserPermissions(userId: string): Promise<UserPermission
     });
 
     if (!user || !user.subscription || !user.subscription.isActive) {
-      // Free user permissions
+      // Free Package - Basic features only
       return {
-        maxPhotos: 2,
-        maxInterests: 3,
-        monthlyMessages: 0,
-        canMessage: false,
-        canViewContacts: false,
+        maxPhotos: 2,          // Limited photo uploads (1–2 photos)
+        maxInterests: 3,       // Send limited interests per day (2–3)
+        monthlyMessages: 0,    // No direct messaging
+        canMessage: false,     // Can only receive messages from Premium members
+        canViewContacts: false,// Cannot view contact details
         canViewFullContacts: false,
-        priorityLevel: 0,
+        priorityLevel: 0,      // No priority in search
         hasVipBadge: false,
         isFeatured: false,
         hasAdvancedSearch: false,
@@ -68,31 +68,145 @@ export async function getUserPermissions(userId: string): Promise<UserPermission
       };
     }
 
-    const pkg = user.subscription.package;
-    return {
-      maxPhotos: pkg.maxPhotos,
-      maxInterests: pkg.maxInterests,
-      monthlyMessages: pkg.monthlyMessages,
-      canMessage: pkg.canMessage,
-      canViewContacts: pkg.canViewContacts,
-      canViewFullContacts: pkg.canViewFullContacts,
-      priorityLevel: pkg.priorityLevel,
-      hasVipBadge: pkg.hasVipBadge,
-      isFeatured: pkg.isFeatured,
-      hasAdvancedSearch: pkg.hasAdvancedSearch,
-      hasProfileHighlight: pkg.hasProfileHighlight,
-      hasWeeklyBoost: pkg.hasWeeklyBoost,
-      hasDedicatedSupport: pkg.hasDedicatedSupport,
-      hasCompatibilityTools: pkg.hasCompatibilityTools,
-      canBrowsePrivately: pkg.canBrowsePrivately,
-      canViewProfileVisitors: pkg.canViewProfileVisitors,
-      hasPersonalMatchmaker: pkg.hasPersonalMatchmaker,
-      hasHandpickedMatches: pkg.hasHandpickedMatches,
-      hasPrioritySupport: pkg.hasPrioritySupport,
-      hasEventAccess: pkg.hasEventAccess,
-      hasProfilePromotion: pkg.hasProfilePromotion,
-      hasPrivacyControl: pkg.hasPrivacyControl,
-    };
+    const packageName = user.subscription.package.name.toLowerCase();
+    
+    switch (packageName) {
+      case 'silver':
+        // Silver Package - Affordable entry-level premium
+        return {
+          maxPhotos: 5,          // Upload up to 5 photos
+          maxInterests: 20,      // Send up to 20 interests per day
+          monthlyMessages: 10,   // Limited direct messaging (10 per month)
+          canMessage: true,      // Can send direct messages
+          canViewContacts: true, // Basic contact details visible (partially masked)
+          canViewFullContacts: false,
+          priorityLevel: 1,      // Priority in search results (lower level)
+          hasVipBadge: false,
+          isFeatured: false,
+          hasAdvancedSearch: false,
+          hasProfileHighlight: false,
+          hasWeeklyBoost: false,
+          hasDedicatedSupport: false,
+          hasCompatibilityTools: false,
+          canBrowsePrivately: false,
+          canViewProfileVisitors: false,
+          hasPersonalMatchmaker: false,
+          hasHandpickedMatches: false,
+          hasPrioritySupport: false,
+          hasEventAccess: false,
+          hasProfilePromotion: false,
+          hasPrivacyControl: false,
+        };
+
+      case 'gold':
+        // Gold Package - Mid-range premium
+        return {
+          maxPhotos: -1,         // Upload unlimited photos
+          maxInterests: -1,      // Send unlimited interests
+          monthlyMessages: -1,   // Unlimited direct messaging
+          canMessage: true,
+          canViewContacts: true,
+          canViewFullContacts: true, // View full contact details
+          priorityLevel: 2,
+          hasVipBadge: false,
+          isFeatured: true,      // Appear in "Featured Profiles" section
+          hasAdvancedSearch: true, // Advanced search filters
+          hasProfileHighlight: true, // Profile highlighted for better visibility
+          hasWeeklyBoost: false,
+          hasDedicatedSupport: false,
+          hasCompatibilityTools: false,
+          canBrowsePrivately: false,
+          canViewProfileVisitors: false,
+          hasPersonalMatchmaker: false,
+          hasHandpickedMatches: false,
+          hasPrioritySupport: false,
+          hasEventAccess: false,
+          hasProfilePromotion: false,
+          hasPrivacyControl: false,
+        };
+
+      case 'platinum':
+        // Platinum Package - Higher premium tier
+        return {
+          maxPhotos: -1,         // All Gold features
+          maxInterests: -1,
+          monthlyMessages: -1,
+          canMessage: true,
+          canViewContacts: true,
+          canViewFullContacts: true,
+          priorityLevel: 3,      // Appear top in search results
+          hasVipBadge: true,     // VIP badge on profile
+          isFeatured: true,
+          hasAdvancedSearch: true,
+          hasProfileHighlight: true,
+          hasWeeklyBoost: true,  // Profile boosted weekly for extra visibility
+          hasDedicatedSupport: true, // Dedicated customer support
+          hasCompatibilityTools: true, // Access to horoscope/compatibility matching tools
+          canBrowsePrivately: true,    // Option to hide online status / browse privately
+          canViewProfileVisitors: true, // View who visited your profile
+          hasPersonalMatchmaker: false,
+          hasHandpickedMatches: false,
+          hasPrioritySupport: false,
+          hasEventAccess: false,
+          hasProfilePromotion: false,
+          hasPrivacyControl: false,
+        };
+
+      case 'vip':
+      case 'elite':
+        // VIP / Elite Package - Premium exclusive tier
+        return {
+          maxPhotos: -1,         // All Platinum features
+          maxInterests: -1,
+          monthlyMessages: -1,
+          canMessage: true,
+          canViewContacts: true,
+          canViewFullContacts: true,
+          priorityLevel: 4,      // Highest priority
+          hasVipBadge: true,
+          isFeatured: true,
+          hasAdvancedSearch: true,
+          hasProfileHighlight: true,
+          hasWeeklyBoost: true,
+          hasDedicatedSupport: true,
+          hasCompatibilityTools: true,
+          canBrowsePrivately: true,
+          canViewProfileVisitors: true,
+          hasPersonalMatchmaker: true,    // Dedicated relationship manager / personal matchmaker
+          hasHandpickedMatches: true,     // Handpicked matches sent directly
+          hasPrioritySupport: true,       // Priority support (24/7 helpline)
+          hasEventAccess: true,           // Invitations to exclusive matchmaking events / webinars
+          hasProfilePromotion: true,      // Profile promoted across platform newsletters & ads
+          hasPrivacyControl: true,        // Complete privacy control
+        };
+
+      default:
+        // Fallback to Free package
+        return {
+          maxPhotos: 2,
+          maxInterests: 3,
+          monthlyMessages: 0,
+          canMessage: false,
+          canViewContacts: false,
+          canViewFullContacts: false,
+          priorityLevel: 0,
+          hasVipBadge: false,
+          isFeatured: false,
+          hasAdvancedSearch: false,
+          hasProfileHighlight: false,
+          hasWeeklyBoost: false,
+          hasDedicatedSupport: false,
+          hasCompatibilityTools: false,
+          canBrowsePrivately: false,
+          canViewProfileVisitors: false,
+          hasPersonalMatchmaker: false,
+          hasHandpickedMatches: false,
+          hasPrioritySupport: false,
+          hasEventAccess: false,
+          hasProfilePromotion: false,
+          hasPrivacyControl: false,
+        };
+    }
   } catch (error) {
     console.error("Error getting user permissions:", error);
     // Return free user permissions on error
@@ -166,11 +280,11 @@ export async function checkUserLimit(userId: string, action: 'interests' | 'mess
 
       // Check if we need to reset monthly counter
       const now = new Date();
-      const lastReset = new Date(user.lastMessageReset);
+      const lastReset = user.lastMessageReset ? new Date(user.lastMessageReset) : new Date(0);
       const monthsDiff = (now.getFullYear() - lastReset.getFullYear()) * 12 + (now.getMonth() - lastReset.getMonth());
 
       let currentMessages = user.monthlyMessages;
-      if (monthsDiff >= 1) {
+      if (monthsDiff >= 1 || !user.lastMessageReset) {
         // Reset monthly counter
         currentMessages = 0;
         await prisma.user.update({

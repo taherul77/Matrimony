@@ -21,6 +21,10 @@ export async function GET(request: Request) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
     const userId = decoded.userId;
 
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type'); // 'sent', 'received', or null for all
+
     // Get user with role
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -31,43 +35,70 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    let interests;
+    let whereClause: any = {};
 
     if (user.role === 'admin') {
-      // Admin can see all interests
-      interests = await prisma.interest.findMany({
-        include: {
-          sender: {
-            select: { id: true, name: true, email: true }
-          },
-          receiver: {
-            select: { id: true, name: true, email: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      // Admin can see all interests with optional filtering
+      if (type === 'sent') {
+        whereClause = { senderId: { not: null } };
+      } else if (type === 'received') {
+        whereClause = { receiverId: { not: null } };
+      }
+      // For admin, no additional where clause needed if type is null
     } else {
       // Regular users see their own interests (sent and received)
-      interests = await prisma.interest.findMany({
-        where: {
+      if (type === 'sent') {
+        whereClause = { senderId: userId };
+      } else if (type === 'received') {
+        whereClause = { receiverId: userId };
+      } else {
+        // Both sent and received
+        whereClause = {
           OR: [
             { senderId: userId },
             { receiverId: userId }
           ]
-        },
-        include: {
-          sender: {
-            select: { id: true, name: true, email: true }
-          },
-          receiver: {
-            select: { id: true, name: true, email: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+        };
+      }
     }
 
-    return NextResponse.json(interests);
+    // Add null safety - exclude records with null sender or receiver
+    if (whereClause.OR) {
+      whereClause = {
+        AND: [
+          whereClause,
+          {
+            senderId: { not: null },
+            receiverId: { not: null }
+          }
+        ]
+      };
+    } else {
+      whereClause = {
+        AND: [
+          whereClause,
+          {
+            senderId: { not: null },
+            receiverId: { not: null }
+          }
+        ]
+      };
+    }
+
+    const interests = await prisma.interest.findMany({
+      where: whereClause,
+      include: {
+        sender: {
+          select: { id: true, name: true, email: true }
+        },
+        receiver: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return NextResponse.json({ interests, total: interests.length });
   } catch (error) {
     console.error('Error fetching interests:', error);
     return NextResponse.json(

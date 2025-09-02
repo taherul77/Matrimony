@@ -32,7 +32,7 @@ model User {
   isVip         Boolean    @default(false) // VIP badge
   profileBoostExpiry DateTime? // When profile boost expires
   monthlyMessages Int      @default(0) // Track monthly message count
-  lastMessageReset DateTime @default(now()) // Last time monthly count was reset
+  lastMessageReset DateTime? @default(now()) // Last time monthly count was reset
   createdAt     DateTime   @default(now())
   matchIds      String[]   @db.ObjectId
   profile       Profile?

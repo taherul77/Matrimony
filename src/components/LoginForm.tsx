@@ -58,8 +58,12 @@ const LoginForm = () => {
 
       if (response.ok) {
         setSuccessMessage('Login successful! Redirecting...');
-        // Store user data in localStorage (optional)
+        
+        // Store user data in both localStorage and cookies
         localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Set user data in cookies for server-side access
+        document.cookie = `user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
         
         // Redirect to dashboard or home page
         setTimeout(() => {

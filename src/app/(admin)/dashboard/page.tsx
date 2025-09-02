@@ -1,221 +1,243 @@
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { FiHeart, FiUsers, FiEye, FiClock, FiCheck, FiX } from 'react-icons/fi';
-import DashboardLayout from '@/components/DashboardLayout';
+import React, { useState, useEffect } from 'react';
+import { 
+  FiUsers, 
+  FiHeart, 
+  FiMessageSquare, 
+  FiEye,
+  FiTrendingUp,
+  FiDollarSign,
+  FiShield,
+  FiStar,
+  FiActivity
+} from 'react-icons/fi';
 
-interface Interest {
-  id: string;
-  status: string;
-  message?: string;
-  createdAt: string;
-  sender?: {
-    name: string;
-    age: number;
-    gender: string;
-    profile?: {
-      photos: string[];
-    };
-  };
-  receiver?: {
-    name: string;
-    age: number;
-    gender: string;
-    profile?: {
-      photos: string[];
-    };
-  };
+interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalMatches: number;
+  messagesExchanged: number;
+  profileViews: number;
+  successStories: number;
+  revenue: number;
+  premiumUsers: number;
 }
 
-const UserDashboard = () => {
-  const [user, setUser] = useState<any>(null);
-  const [interests, setInterests] = useState<Interest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    sentInterests: 0,
-    receivedInterests: 0,
-    acceptedInterests: 0,
+const AdminDashboard: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalMatches: 0,
+    messagesExchanged: 0,
     profileViews: 0,
+    successStories: 0,
+    revenue: 0,
+    premiumUsers: 0
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-      fetchUserData();
-    }
+    fetchDashboardStats();
   }, []);
 
-  const fetchUserData = async () => {
+  const fetchDashboardStats = async () => {
     try {
-      // This would fetch user-specific interests and stats
-      // For now, we'll show placeholder data
-      setStats({
-        sentInterests: 5,
-        receivedInterests: 12,
-        acceptedInterests: 3,
-        profileViews: 45,
-      });
-      
-      setInterests([
-        // Placeholder data - in real app, fetch from API
-      ]);
+      setLoading(true);
+      // Mock data for demonstration
+      const mockStats: DashboardStats = {
+        totalUsers: 125000,
+        activeUsers: 45000,
+        totalMatches: 85000,
+        messagesExchanged: 2500000,
+        profileViews: 15000000,
+        successStories: 12500,
+        revenue: 2500000,
+        premiumUsers: 15000
+      };
+      setStats(mockStats);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching dashboard stats:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const StatCard: React.FC<{
+    title: string;
+    value: string | number;
+    icon: React.ElementType;
+    color: string;
+    change?: string;
+  }> = ({ title, value, icon: Icon, color, change }) => (
+    <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </p>
+          {change && (
+            <p className="text-sm text-green-600 mt-1">
+              <FiTrendingUp className="inline w-3 h-3 mr-1" />
+              {change}
+            </p>
+          )}
+        </div>
+        <div className={`p-3 rounded-full ${color}`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-  <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="text-xl text-gray-600">Loading Dashboard...</div>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
- 
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg shadow-lg p-8 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-              <p className="text-pink-100">Here's what's happening with your matrimonial journey.</p>
-            </div>
-            <div className="hidden md:block">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-                <FiHeart className="h-10 w-10 text-white" />
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Overview and key metrics for your matrimonial platform</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Profile Views</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.profileViews}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FiEye className="h-6 w-6 text-blue-600" />
-              </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Total Users"
+            value={stats.totalUsers}
+            icon={FiUsers}
+            color="bg-blue-500"
+            change="+12% from last month"
+          />
+          <StatCard
+            title="Active Users"
+            value={stats.activeUsers}
+            icon={FiActivity}
+            color="bg-green-500"
+            change="+8% from last month"
+          />
+          <StatCard
+            title="Total Matches"
+            value={stats.totalMatches}
+            icon={FiHeart}
+            color="bg-red-500"
+            change="+15% from last month"
+          />
+          <StatCard
+            title="Messages Exchanged"
+            value={stats.messagesExchanged}
+            icon={FiMessageSquare}
+            color="bg-purple-500"
+            change="+22% from last month"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Profile Views"
+            value={stats.profileViews}
+            icon={FiEye}
+            color="bg-indigo-500"
+            change="+18% from last month"
+          />
+          <StatCard
+            title="Success Stories"
+            value={stats.successStories}
+            icon={FiStar}
+            color="bg-yellow-500"
+            change="+5% from last month"
+          />
+          <StatCard
+            title="Revenue"
+            value={`₹${stats.revenue.toLocaleString()}`}
+            icon={FiDollarSign}
+            color="bg-emerald-500"
+            change="+25% from last month"
+          />
+          <StatCard
+            title="Premium Users"
+            value={stats.premiumUsers}
+            icon={FiShield}
+            color="bg-orange-500"
+            change="+20% from last month"
+          />
+        </div>
+
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Registrations */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Registrations</h3>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <FiUsers className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">New User #{i}</p>
+                    <p className="text-xs text-gray-500">{i} hours ago</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Interests Sent</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.sentInterests}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <FiHeart className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Interests Received</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.receivedInterests}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <FiUsers className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Connections</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.acceptedInterests}</p>
-              </div>
-              <div className="p-3 bg-pink-100 rounded-lg">
-                <FiCheck className="h-6 w-6 text-pink-600" />
-              </div>
+          {/* Recent Matches */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Matches</h3>
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <FiHeart className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Match Created</p>
+                    <p className="text-xs text-gray-500">{i * 2} hours ago</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <FiUsers className="h-6 w-6 text-pink-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Find Matches</h3>
-              <p className="text-gray-600 mb-4">Discover compatible profiles based on your preferences.</p>
-              <a
-                href="/search"
-                className="inline-flex items-center px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
-              >
-                Start Searching
-              </a>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <FiEye className="h-6 w-6 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Update Profile</h3>
-              <p className="text-gray-600 mb-4">Keep your profile fresh and attractive to potential matches.</p>
-              <Link
-                href="/profile"
-                className="inline-flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-              >
-                Edit Profile
-              </Link>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <FiHeart className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">View Matches</h3>
-              <p className="text-gray-600 mb-4">Check your mutual interests and connections.</p>
-              <a
-                href="/matches"
-                className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-              >
-                View Matches
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <p className="text-sm text-gray-600">Your latest interactions and updates</p>
-          </div>
-          <div className="p-6">
-            <div className="text-center py-8">
-              <FiClock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No recent activity to show.</p>
-              <p className="text-sm text-gray-400 mt-2">Start browsing profiles to see activity here.</p>
-            </div>
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button className="bg-white border border-gray-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow">
+              <FiUsers className="w-6 h-6 text-blue-500 mb-2" />
+              <h4 className="font-medium text-gray-900">Manage Users</h4>
+              <p className="text-sm text-gray-600">View and manage user accounts</p>
+            </button>
+            <button className="bg-white border border-gray-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow">
+              <FiShield className="w-6 h-6 text-green-500 mb-2" />
+              <h4 className="font-medium text-gray-900">Verification Queue</h4>
+              <p className="text-sm text-gray-600">Review pending verifications</p>
+            </button>
+            <button className="bg-white border border-gray-300 rounded-lg p-4 text-left hover:shadow-md transition-shadow">
+              <FiMessageSquare className="w-6 h-6 text-purple-500 mb-2" />
+              <h4 className="font-medium text-gray-900">Support Tickets</h4>
+              <p className="text-sm text-gray-600">Handle customer support</p>
+            </button>
           </div>
         </div>
       </div>
- 
+    </div>
   );
 };
 
-export default UserDashboard;
+export default AdminDashboard;

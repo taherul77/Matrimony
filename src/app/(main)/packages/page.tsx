@@ -84,16 +84,12 @@ const PackagesPage = () => {
     setSelectedPackage(packageId);
     
     try {
-      // In a real app, you would get the current user ID from auth context
-      const userId = "current-user-id"; // Replace with actual user ID
-      
       const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId,
           packageId
         }),
       });
