@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import Link from "next/link";
+import { PhotoUpload, ContactDetails } from '@/components';
 import {
   FiEdit,
   FiCamera,
@@ -334,87 +334,17 @@ export default function ProfilePage() {
             {/* Profile Header */}
             <div className="bg-gradient-to-r from-blue-50 to-teal-50 p-8">
               <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
-                {/* Profile Photo */}
+                {/* Profile Photo Upload */}
                 <div className="relative">
-                  <div className="relative w-48 h-48 bg-gradient-to-br from-blue-100 to-teal-100 rounded-full overflow-hidden shadow-xl border-4 border-white">
-                    {profile?.photos && profile.photos.length > 0 ? (
-                      <img
-                        src={profile.photos[currentPhotoIndex]}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center">
-                          <FiUser className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-500 text-sm">No photo</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Photo Navigation */}
-                    {profile?.photos && profile.photos.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevPhoto}
-                          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white transition-colors shadow-lg"
-                        >
-                          <svg
-                            className="w-4 h-4 text-gray-700"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 19l-7-7 7-7"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={nextPhoto}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 rounded-full p-2 hover:bg-white transition-colors shadow-lg"
-                        >
-                          <svg
-                            className="w-4 h-4 text-gray-700"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-
-                    {/* Add Photo Button */}
-                    <button className="absolute bottom-2 right-2 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full p-3 hover:scale-110 transition-all duration-300 shadow-lg">
-                      <FiCamera className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-
-                  {/* Photo Indicators */}
-                  {profile?.photos && profile.photos.length > 1 && (
-                    <div className="flex justify-center mt-4 space-x-2">
-                      {profile.photos.map((_, index: number) => (
-                        <div
-                          key={index}
-                          className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                            index === currentPhotoIndex
-                              ? "bg-blue-500 scale-125"
-                              : "bg-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <PhotoUpload 
+                    currentUserId={user?.id || ''}
+                    existingPhotos={profile?.photos || []}
+                    onPhotosUpdate={(photos) => {
+                      if (profile) {
+                        setProfile({ ...profile, photos });
+                      }
+                    }}
+                  />
                 </div>
 
                 {/* Basic Info */}
@@ -908,23 +838,12 @@ export default function ProfilePage() {
                   Contact Info
                 </h3>
 
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">
-                      Email
-                    </label>
-                    <p className="text-gray-800 font-medium">{user.email}</p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">
-                      Phone
-                    </label>
-                    <p className="text-gray-800 font-medium">
-                      {profile?.phone || "Not provided"}
-                    </p>
-                  </div>
-                </div>
+                <ContactDetails
+                  targetUserId={user?.id || ''}
+                  currentUserId={user?.id || ''}
+                  userPhone={profile?.phone}
+                  userEmail={user?.email || ''}
+                />
               </div>
             </div>
           </div>

@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FiHeart, FiMapPin, FiBriefcase, FiBookOpen, FiStar } from 'react-icons/fi';
+import { FiHeart, FiMapPin, FiBriefcase, FiBookOpen, FiStar, FiEye } from 'react-icons/fi';
+import { HiSparkles } from 'react-icons/hi';
+import InterestButton from './InterestButton';
 
 interface ProfileCardProps {
   profile: {
@@ -26,15 +28,19 @@ interface ProfileCardProps {
     photos?: string[];
     religion?: string;
     caste?: string;
+    // Package features
+    isVip?: boolean;
+    isFeatured?: boolean;
+    hasProfileHighlight?: boolean;
+    priorityLevel?: number;
+    packageName?: string;
   };
+  currentUserId?: string;
 }
 
-const ProfileCard = ({ profile }: ProfileCardProps) => {
+const ProfileCard = ({ profile, currentUserId }: ProfileCardProps) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [showInterestModal, setShowInterestModal] = useState(false);
-  const [interestMessage, setInterestMessage] = useState('');
-  const [sendingInterest, setSendingInterest] = useState(false);
 
   // Get data from either new structure (profile.profile) or old structure (direct)
   const photos = profile.profile?.photos || profile.photos || [];
@@ -56,36 +62,18 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
     }
   };
 
-  const sendInterest = async () => {
-    setSendingInterest(true);
-    try {
-      const response = await fetch('/api/interests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          receiverId: profile.id,
-          message: interestMessage || 'I am interested in your profile'
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert('Interest sent successfully!');
-        setShowInterestModal(false);
-        setInterestMessage('');
-      } else {
-        alert(data.error || 'Failed to send interest');
-      }
-    } catch (error) {
-      console.error('Error sending interest:', error);
-      alert('Failed to send interest. Please try again.');
-    } finally {
-      setSendingInterest(false);
+  // Get package-based styling
+  const getCardStyling = () => {
+    if (profile.isFeatured && (profile.priorityLevel ?? 0) >= 2) {
+      return 'ring-2 ring-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50';
     }
+    if (profile.isVip) {
+      return 'ring-2 ring-purple-300 bg-gradient-to-br from-purple-50 to-pink-50';
+    }
+    if (profile.hasProfileHighlight) {
+      return 'ring-1 ring-blue-300 bg-gradient-to-br from-blue-50 to-cyan-50';
+    }
+    return '';
   };
 
   return (
@@ -190,61 +178,9 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
               View Profile
             </button>
           </Link>
-          <button 
-            onClick={() => setShowInterestModal(true)}
-            className="flex-1 border-2 border-blue-500 text-blue-600 py-3 px-4 rounded-full hover:bg-blue-50 hover:scale-105 transition-all duration-300 font-semibold transform hover:-translate-y-0.5"
-          >
-            Send Interest
-          </button>
+          <InterestButton targetUserId={profile.id} currentUserId={""} />
         </div>
       </div>
-
-      {/* Interest Modal */}
-      {showInterestModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiHeart className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Send Interest</h3>
-              <p className="text-gray-600">Express your interest in {profile.name}</p>
-            </div>
-            
-            <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-medium mb-2">
-                Add a personal message (optional)
-              </label>
-              <textarea
-                value={interestMessage}
-                onChange={(e) => setInterestMessage(e.target.value)}
-                placeholder="Write a brief message to introduce yourself..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={3}
-                maxLength={200}
-              />
-              <p className="text-xs text-gray-500 mt-1">{interestMessage.length}/200 characters</p>
-            </div>
-
-            <div className="flex space-x-4">
-              <button 
-                onClick={() => setShowInterestModal(false)}
-                disabled={sendingInterest}
-                className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={sendInterest}
-                disabled={sendingInterest}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50"
-              >
-                {sendingInterest ? 'Sending...' : 'Send Interest'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

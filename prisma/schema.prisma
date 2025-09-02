@@ -25,12 +25,28 @@ model User {
   bio           String?
   profileImage  String?    // Added profile image field
   role          String     @default("user") // "user" or "admin"
+  isOnline      Boolean    @default(false)
+  lastSeen      DateTime?  @default(now())
+  isPrivate     Boolean    @default(false) // for browsing privately
+  isFeatured    Boolean    @default(false) // For featured profiles
+  isVip         Boolean    @default(false) // VIP badge
+  profileBoostExpiry DateTime? // When profile boost expires
+  monthlyMessages Int      @default(0) // Track monthly message count
+  lastMessageReset DateTime @default(now()) // Last time monthly count was reset
   createdAt     DateTime   @default(now())
   matchIds      String[]   @db.ObjectId
   profile       Profile?
   preferences   UserPreference?
   sentInterests Interest[] @relation("SentInterests")
   receivedInterests Interest[] @relation("ReceivedInterests")
+  subscription  Subscription?
+  dailyLimits   DailyLimit[]
+  profileVisits ProfileVisit[] @relation("ProfileVisitor")
+  profileVisited ProfileVisit[] @relation("ProfileVisited")
+  sentMessages  Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  handpickedMatches HandpickedMatch[] @relation("HandpickedReceiver")
+  notifications Notification[]
 }
 
 model UserPreference {
@@ -98,11 +114,135 @@ model Match {
   createdAt DateTime @default(now())
 }
 model Package {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   @unique
+  price        Float
+  duration     Int      // in days
+  features     String[]
+  maxPhotos    Int      @default(2)
+  maxInterests Int      @default(2)
+  monthlyMessages Int   @default(0) // Monthly message limit (-1 = unlimited)
+  canMessage   Boolean  @default(false)
+  canViewContacts Boolean @default(false)
+  canViewFullContacts Boolean @default(false) // Full vs masked contact details
+  priorityLevel Int     @default(0) // 0=normal, 1=silver, 2=gold, 3=platinum, 4=vip
+  hasVipBadge  Boolean  @default(false)
+  isFeatured   Boolean  @default(false) // Appears in featured section
+  hasAdvancedSearch Boolean @default(false)
+  hasProfileHighlight Boolean @default(false)
+  hasWeeklyBoost Boolean @default(false)
+  hasDedicatedSupport Boolean @default(false)
+  hasCompatibilityTools Boolean @default(false)
+  canBrowsePrivately Boolean @default(false)
+  canViewProfileVisitors Boolean @default(false)
+  hasPersonalMatchmaker Boolean @default(false)
+  hasHandpickedMatches Boolean @default(false)
+  hasPrioritySupport Boolean @default(false)
+  hasEventAccess Boolean @default(false)
+  hasProfilePromotion Boolean @default(false)
+  hasPrivacyControl Boolean @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  packageId    String   @db.ObjectId
+  startDate    DateTime @default(now())
+  endDate      DateTime
+  isActive     Boolean  @default(true)
+  paymentStatus String  @default("pending") // pending, completed, failed
+  amount       Float
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  package      Package  @relation(fields: [packageId], references: [id])
+  
+  @@unique([userId]) // User can have only one active subscription
+}
+
+model DailyLimit {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  date         DateTime @default(now())
+  interestsSent Int     @default(0)
+  messagesSent Int      @default(0)
+  profileViews Int      @default(0)
+  user         User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, date])
+}
+
+model ProfileVisit {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  visitorId  String   @db.ObjectId
+  visitedId  String   @db.ObjectId
+  timestamp  DateTime @default(now())
+  visitor    User     @relation("ProfileVisitor", fields: [visitorId], references: [id])
+  visited    User     @relation("ProfileVisited", fields: [visitedId], references: [id])
+  
+  @@unique([visitorId, visitedId, timestamp])
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  content    String
+  isRead     Boolean  @default(false)
+  timestamp  DateTime @default(now())
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+model HandpickedMatch {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  receiverId   String   @db.ObjectId
+  matchUserId  String   @db.ObjectId
+  status       String   @default("pending") // pending, viewed, interested, rejected
+  reason       String?  // Why this match was suggested
+  createdAt    DateTime @default(now())
+  receiver     User     @relation("HandpickedReceiver", fields: [receiverId], references: [id])
+  
+  @@unique([receiverId, matchUserId])
+}
+
+model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   @unique
-  price     Float
-  duration  Int      // in days
-  features  String[]
+  userId    String   @db.ObjectId
+  type      String   // interest_received, message_received, profile_viewed, match_suggested, etc.
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  data      String?  // JSON string for additional data
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  eventType   String   // webinar, meetup, matchmaking_event
+  date        DateTime
+  location    String?  // Can be null for online events
+  isOnline    Boolean  @default(false)
+  maxAttendees Int?
+  registeredUsers String[] @db.ObjectId
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+}
+
+model CompatibilityScore {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userAId    String   @db.ObjectId
+  userBId    String   @db.ObjectId
+  score      Float    // 0-100 compatibility score
+  factors    String[] // What contributed to this score
+  horoscope  String?  // Horoscope compatibility details
+  createdAt  DateTime @default(now())
+  
+  @@unique([userAId, userBId])
 }

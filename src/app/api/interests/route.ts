@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { checkUserLimit, incrementUserUsage } from '@/lib/permissions';
 
 const prisma = new PrismaClient();
 
@@ -101,6 +102,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check user's interest limit
+    const limitCheck = await checkUserLimit(senderId, 'interests');
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: limitCheck.message || 'Interest limit reached',
+          current: limitCheck.current,
+          limit: limitCheck.limit
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if interest already exists
     const existingInterest = await prisma.interest.findFirst({
       where: {
@@ -116,7 +130,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new interest (no include)
+    // Create new interest
     const interest = await prisma.interest.create({
       data: {
         senderId,
@@ -126,9 +140,33 @@ export async function POST(request: Request) {
       }
     });
 
+    // Increment user's interest usage
+    await incrementUserUsage(senderId, 'interests');
+
+    // Create notification for receiver (will be enabled after Prisma regeneration)
+    try {
+      // await prisma.notification.create({
+      //   data: {
+      //     userId: receiverId,
+      //     type: 'interest_received',
+      //     title: 'New Interest Received',
+      //     content: `Someone is interested in your profile`,
+      //     data: JSON.stringify({ senderId, interestId: interest.id })
+      //   }
+      // });
+    } catch (error) {
+      console.log("Notification creation temporarily disabled");
+    }
+
     // Fetch sender and receiver for response
-    const sender = await prisma.user.findUnique({ where: { id: senderId }, select: { id: true, name: true, email: true } });
-    const receiver = await prisma.user.findUnique({ where: { id: receiverId }, select: { id: true, name: true, email: true } });
+    const sender = await prisma.user.findUnique({ 
+      where: { id: senderId }, 
+      select: { id: true, name: true, email: true } 
+    });
+    const receiver = await prisma.user.findUnique({ 
+      where: { id: receiverId }, 
+      select: { id: true, name: true, email: true } 
+    });
 
     return NextResponse.json({
       message: 'Interest sent successfully',
