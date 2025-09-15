@@ -201,7 +201,7 @@ const AnalyticsPage: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Package Distribution</h3>
             <div className="space-y-4">
               {analytics.packageDistribution.map((pkg, index) => (
-                <div key={index} className="flex items-center justify-between">
+                <div key={`package-dist-${index}-${pkg.name}`} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <FiPackage className="w-4 h-4 mr-2 text-gray-500" />
                     <span className="text-gray-700">{pkg.name}</span>
@@ -250,7 +250,7 @@ const AnalyticsPage: React.FC = () => {
               {analytics.packageDistribution.filter(pkg => pkg.name !== 'Free').map((pkg, index) => {
                 const revenue = pkg.users * (pkg.name === 'VIP' ? 5000 : pkg.name === 'Platinum' ? 2500 : pkg.name === 'Gold' ? 1500 : 500);
                 return (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div key={`revenue-${index}-${pkg.name}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <h4 className="font-medium text-gray-900">{pkg.name} Package</h4>
                       <p className="text-sm text-gray-600">{pkg.users.toLocaleString()} subscribers</p>

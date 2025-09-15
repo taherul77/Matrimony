@@ -27,17 +27,19 @@ import { FaCrown } from "react-icons/fa";
 import { HiSparkles } from "react-icons/hi";
 import Link from "next/link";
 import { useBusinessLogic } from "../hooks/useBusinessLogic";
+import { useClientOnly } from "../hooks/useClientOnly";
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, toggleMobileSidebar } = useSidebar();
   const [role, setRole] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
   const [currentPackage, setCurrentPackage] = React.useState<string>('free');
+  const isClient = useClientOnly();
   
   const { permissions, loading } = useBusinessLogic(userId || undefined);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isClient) {
       const userData = localStorage.getItem('user');
       if (userData) {
         try {
@@ -48,7 +50,7 @@ const AppSidebar: React.FC = () => {
         } catch {}
       }
     }
-  }, []);
+  }, [isClient]);
 
   // Package badge component
   const PackageBadge = () => {
@@ -281,7 +283,8 @@ const AppSidebar: React.FC = () => {
   const combinedAdminMenu = role === 'admin' ? [...userMenu, ...adminMenu] : userMenu;
   const menuItems = role === 'admin' ? combinedAdminMenu : userMenu;
 
-  if (loading) {
+  // Don't render until client is ready to prevent hydration mismatches
+  if (!isClient || loading) {
     return (
       <aside className={`fixed top-0 left-0 h-full z-50 bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ${isExpanded ? "w-[290px]" : "w-[90px]"} ${isMobileOpen ? "block" : "hidden"} lg:block`}>
         <div className="flex flex-col h-full">
@@ -308,7 +311,7 @@ const AppSidebar: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           <nav className="space-y-1 pb-4">
             {menuItems.map((item, index) => (
-              <div key={`${item.label}-${index}`}>
+              <div key={`${item.type || 'menu'}-${item.label}-${index}`}>
                 {item.type === 'section' ? (
                   <MenuItem item={item} isSection={true} />
                 ) : (

@@ -379,7 +379,7 @@ const PackageComparison: React.FC<PackageComparisonProps> = ({
             <div className="space-y-2">
               {features.map((feature, index) => (
                 <div 
-                  key={index}
+                  key={`feature-comparison-${index}`}
                   className={`grid grid-cols-6 gap-4 p-4 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors`}
                 >
                   <div className="flex items-center gap-3">

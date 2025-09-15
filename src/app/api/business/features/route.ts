@@ -8,28 +8,48 @@ const prisma = new PrismaClient();
 // GET /api/business/features - Get user's current package features
 export async function GET(request: Request) {
   try {
-    // Get user from cookies
+    // Get both token and user from cookies
     const cookies = request.headers.get('cookie');
+    
+    // Check for token authentication
+    const token = cookies?.split(';')
+      .find(c => c.trim().startsWith('token='))
+      ?.split('=')[1];
+
+    // Also get user data from cookie (from local storage)
     const userCookie = cookies?.split(';')
       .find(c => c.trim().startsWith('user='))
       ?.split('=')[1];
 
-    if (!userCookie) {
+    if (!token && !userCookie) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    let currentUser;
-    try {
-      currentUser = JSON.parse(decodeURIComponent(userCookie));
-    } catch (error) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    let userId;
+
+    // Try token authentication first
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+        userId = decoded?.userId;
+      } catch (error) {
+        console.log('Token verification failed:', error);
+      }
     }
 
-    if (!currentUser?.id) {
-      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
+    // Fallback to user cookie if token auth fails
+    if (!userId && userCookie) {
+      try {
+        const currentUser = JSON.parse(decodeURIComponent(userCookie));
+        userId = currentUser?.id;
+      } catch (error) {
+        console.log('User cookie parsing failed:', error);
+      }
     }
 
-    const userId = currentUser.id;
+    if (!userId) {
+      return NextResponse.json({ error: "User ID not found" }, { status: 401 });
+    }
     const permissions = await getUserPermissions(userId);
     
     // Get current usage

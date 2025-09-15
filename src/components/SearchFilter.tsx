@@ -59,8 +59,8 @@ const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
       {isExpanded && (
         <div className="border-t border-gray-200 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Age Range */}
-            <div>
+            {/* Age Range (grouped, full row) */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Age Range</label>
               <div className="flex space-x-2">
                 <input
@@ -80,8 +80,8 @@ const SearchFilter = ({ onFilterChange }: SearchFilterProps) => {
               </div>
             </div>
 
-            {/* Location */}
-            <div>
+            {/* Location (separate row) */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
               <div className="relative">
                 <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />

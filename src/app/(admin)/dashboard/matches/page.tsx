@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProfileCard } from '@/components';
 import { FiHeart, FiUsers, FiStar } from 'react-icons/fi';
+import { useLocalStorage } from '@/hooks/useClientOnly';
 
 interface Match {
   id: string;
@@ -22,25 +23,23 @@ const DashboardMatchesPage: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userData] = useLocalStorage('user', null);
 
   useEffect(() => {
-    // Get user ID from localStorage/cookies
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          setCurrentUserId(user.id);
-          fetchMatches(user.id);
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-          setLoading(false);
-        }
-      } else {
+    // Get user ID from localStorage
+    if (userData) {
+      try {
+        const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+        setCurrentUserId(user.id);
+        fetchMatches(user.id);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
         setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-  }, []);
+  }, [userData]);
 
   const fetchMatches = async (userId: string) => {
     try {
@@ -49,7 +48,7 @@ const DashboardMatchesPage: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setMatches(data.matches || []);
+        setMatches(data.profiles || []);
       } else {
         console.error('Failed to fetch matches');
         setMatches([]);

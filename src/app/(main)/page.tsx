@@ -144,7 +144,7 @@ export default function Home() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
+              <div key={`stat-${index}`} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{stat.number}</div>
                 <div className="text-gray-600">{stat.label}</div>
               </div>
@@ -165,7 +165,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="text-center p-6 rounded-2xl hover:shadow-lg transition-all duration-300">
+              <div key={`feature-${index}`} className="text-center p-6 rounded-2xl hover:shadow-lg transition-all duration-300">
                 <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
@@ -191,7 +191,7 @@ export default function Home() {
             {loading ? (
               // Loading skeleton
               Array.from({ length: 9 }).map((_, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
+                <div key={`skeleton-${index}`} className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
                   <div className="w-full h-64 bg-gray-300 rounded-xl mb-4"></div>
                   <div className="h-4 bg-gray-300 rounded mb-2"></div>
                   <div className="h-4 bg-gray-300 rounded w-3/4"></div>
