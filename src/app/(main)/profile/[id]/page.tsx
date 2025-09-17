@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import OptimizedRealTimeChat from '@/components/OptimizedRealTimeChat';
+import { generateUniqueKey } from '@/lib/utils';
 
 import Link from 'next/link';
 import { FiArrowLeft, FiHeart, FiX, FiMapPin, FiBriefcase, FiBookOpen, FiUser, FiMail, FiPhone, FiShare, FiFlag } from 'react-icons/fi';
@@ -28,13 +30,15 @@ interface UserProfile {
 
 export default function ViewProfilePage() {
   const params = useParams();
-  const userId = params.id as string;
+  const userId = params?.id as string;
   
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [showInterestModal, setShowInterestModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -54,8 +58,21 @@ export default function ViewProfilePage() {
       }
     };
 
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/me');
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUser(data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
     if (userId) {
       fetchUserProfile();
+      fetchCurrentUser();
     }
   }, [userId]);
 
@@ -76,6 +93,10 @@ export default function ViewProfilePage() {
 
   const handleSendInterest = () => {
     setShowInterestModal(true);
+  };
+
+  const handleSendMessage = () => {
+    setShowChatModal(true);
   };
 
   const sendInterest = async () => {
@@ -223,9 +244,9 @@ export default function ViewProfilePage() {
                 {/* Photo Indicators */}
                 {user.profile?.photos && user.profile.photos.length > 1 && (
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {user.profile.photos.map((_, index: number) => (
+                    {user.profile.photos.map((photo, index: number) => (
                       <div
-                        key={index}
+                        key={generateUniqueKey('photo-indicator', userId, index, photo.substring(photo.lastIndexOf('/') + 1, photo.lastIndexOf('.')))}
                         className={`w-3 h-3 rounded-full transition-all duration-300 ${
                           index === currentPhotoIndex ? 'bg-white scale-125' : 'bg-white/50'
                         }`}
@@ -348,7 +369,10 @@ export default function ViewProfilePage() {
                   <FiHeart className="w-5 h-5" />
                   <span>Send Interest</span>
                 </button>
-                <button className="flex-1 border-2 border-blue-500 text-blue-600 py-4 px-6 rounded-xl font-semibold hover:bg-blue-50 hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2">
+                <button 
+                  onClick={handleSendMessage}
+                  className="flex-1 border-2 border-blue-500 text-blue-600 py-4 px-6 rounded-xl font-semibold hover:bg-blue-50 hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2"
+                >
                   <FiMail className="w-5 h-5" />
                   <span>Send Message</span>
                 </button>
@@ -400,6 +424,42 @@ export default function ViewProfilePage() {
               >
                 {sendingInterest ? 'Sending...' : 'Send Interest'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && currentUser && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center space-x-4">
+                <img
+                  src={user.profile?.photos?.[0] || '/default-avatar.png'}
+                  alt={user.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">{user.name}</h3>
+                  <p className="text-gray-600">Start a conversation</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowChatModal(false)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <FiX className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-hidden">
+              <OptimizedRealTimeChat
+                currentUserId={currentUser.id}
+                receiverId={userId}
+                receiverName={user.name}
+                receiverImage={user.profile?.photos?.[0]}
+              />
             </div>
           </div>
         </div>

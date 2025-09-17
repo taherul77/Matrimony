@@ -1,8 +1,7 @@
 'use client';
 
-
-
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
+import { AppProviders } from "../context/AppProviders";
 import AppSidebar from "./AppSidebar";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
@@ -35,9 +34,11 @@ const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
-    <SidebarProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </SidebarProvider>
+    <AppProviders>
+      <SidebarProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </SidebarProvider>
+    </AppProviders>
   );
 };
 

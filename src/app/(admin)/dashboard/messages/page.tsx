@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import MessagingComponent from '@/components/MessagingComponent';
+import OptimizedRealTimeChat from '@/components/OptimizedRealTimeChat';
 
 interface User {
   id: string;
@@ -44,12 +44,13 @@ const MessagesPage = () => {
 
   const fetchConversations = async () => {
     try {
-      const response = await fetch('/api/messages');
+      const response = await fetch('/api/conversations');
       if (response.ok) {
         const data = await response.json();
+        console.log('Conversations loaded:', data.conversations); // Debug log
         setConversations(data.conversations || []);
       } else {
-        console.error('Failed to fetch conversations');
+        console.error('Failed to fetch conversations:', response.status);
         setConversations([]);
       }
     } catch (error) {
@@ -89,45 +90,64 @@ const MessagesPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-          <p className="text-gray-600">Connect with your matches and start meaningful conversations</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                📨 Admin Messages Dashboard
+              </h1>
+              <p className="text-gray-600">Monitor and participate in real-time conversations</p>
+            </div>
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
+              🚀 Real-time Enabled
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
           {/* Conversations List */}
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Real-time sync active"></div>
+              </div>
             </div>
             <div className="overflow-y-auto h-full">
-              {conversations.map((conversation) => (
-                <div
-                  key={conversation.userId}
-                  onClick={() => setSelectedConversation(conversation.userId)}
-                  className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedConversation === conversation.userId ? "bg-blue-50" : ""
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={conversation.userImage || "/default-avatar.png"}
-                      alt={conversation.userName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {conversation.userName}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {conversation.lastMessage}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {conversation.timestamp}
-                      </p>
+              {conversations.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  <p>No conversations yet</p>
+                  <p className="text-sm mt-2">Start a conversation by visiting user profiles and clicking "Send Message"</p>
+                </div>
+              ) : (
+                conversations.map((conversation) => (
+                  <div
+                    key={conversation.userId}
+                    onClick={() => setSelectedConversation(conversation.userId)}
+                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedConversation === conversation.userId ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={conversation.userImage || "/default-avatar.png"}
+                        alt={conversation.userName}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {conversation.userName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {conversation.lastMessage}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {conversation.timestamp}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -135,11 +155,14 @@ const MessagesPage = () => {
           <div className="lg:col-span-2">
             {selectedConversation ? (
               <div className="bg-white rounded-lg shadow-sm h-full">
-                <MessagingComponent
+                <OptimizedRealTimeChat
                   currentUserId={currentUser.id}
-                  targetUserId={selectedConversation}
-                  targetUserName={
+                  receiverId={selectedConversation}
+                  receiverName={
                     conversations.find(c => c.userId === selectedConversation)?.userName || 'User'
+                  }
+                  receiverImage={
+                    conversations.find(c => c.userId === selectedConversation)?.userImage
                   }
                 />
               </div>

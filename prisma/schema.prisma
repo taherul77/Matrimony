@@ -188,13 +188,33 @@ model ProfileVisit {
 
 model Message {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatRoomId String   @db.ObjectId
   senderId   String   @db.ObjectId
   receiverId String   @db.ObjectId
   content    String
+  messageType String  @default("text") // text, image, file
   isRead     Boolean  @default(false)
+  readAt     DateTime?
   timestamp  DateTime @default(now())
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
   sender     User     @relation("MessageSender", fields: [senderId], references: [id])
   receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+model ChatRoom {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id      String    @db.ObjectId
+  user2Id      String    @db.ObjectId
+  lastMessage  String?
+  lastMessageAt DateTime?
+  unreadCount1 Int       @default(0) // Unread count for user1
+  unreadCount2 Int       @default(0) // Unread count for user2
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+  
+  @@unique([user1Id, user2Id])
 }
 
 model HandpickedMatch {
