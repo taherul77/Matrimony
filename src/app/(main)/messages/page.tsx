@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import MessagingComponent from '@/components/MessagingComponent';
+import OptimizedRealTimeChat from '@/components/OptimizedRealTimeChat';
 
 interface User {
   id: string;
@@ -135,11 +135,14 @@ const MessagesPage = () => {
           <div className="lg:col-span-2">
             {selectedConversation ? (
               <div className="bg-white rounded-lg shadow-sm h-full">
-                <MessagingComponent
+                <OptimizedRealTimeChat
                   currentUserId={currentUser.id}
-                  targetUserId={selectedConversation}
-                  targetUserName={
+                  receiverId={selectedConversation}
+                  receiverName={
                     conversations.find(c => c.userId === selectedConversation)?.userName || 'User'
+                  }
+                  receiverImage={
+                    conversations.find(c => c.userId === selectedConversation)?.userImage
                   }
                 />
               </div>

@@ -40,9 +40,9 @@ export async function GET(request: Request) {
     if (user.role === 'admin') {
       // Admin can see all interests with optional filtering
       if (type === 'sent') {
-        whereClause = { senderId: { not: null } };
+        whereClause = {}; // Show all sent interests
       } else if (type === 'received') {
-        whereClause = { receiverId: { not: null } };
+        whereClause = {}; // Show all received interests  
       }
       // For admin, no additional where clause needed if type is null
     } else {
@@ -62,28 +62,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Add null safety - exclude records with null sender or receiver
-    if (whereClause.OR) {
-      whereClause = {
-        AND: [
-          whereClause,
-          {
-            senderId: { not: null },
-            receiverId: { not: null }
-          }
-        ]
-      };
-    } else {
-      whereClause = {
-        AND: [
-          whereClause,
-          {
-            senderId: { not: null },
-            receiverId: { not: null }
-          }
-        ]
-      };
-    }
+    // Note: senderId and receiverId are required fields in the schema, so no null check needed
 
     const interests = await prisma.interest.findMany({
       where: whereClause,
