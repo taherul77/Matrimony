@@ -106,7 +106,7 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
         }
 
         socketRef.current = io('/', {
-          path: '/api/socket',
+          path: '/api/socketio',
           addTrailingSlash: false,
           timeout: 10000,
           // Force long-polling transport to avoid websocket failures in some environments

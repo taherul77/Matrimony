@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Get user's conversations
 export async function GET() {
   try {

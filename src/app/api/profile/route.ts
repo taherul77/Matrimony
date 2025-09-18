@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET user profile
 export async function GET(request: NextRequest) {
   try {

@@ -3,6 +3,9 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET /api/featured - Get featured profiles (Gold+ packages)
 export async function GET(request: Request) {
   try {

@@ -8,17 +8,10 @@ const prisma = new PrismaClient();
 // Get user by ID
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } } | { params: Promise<{ id: string }> }
+  context: { params: { id: string } }
 ) {
   try {
-    let id: string;
-    if ('params' in context && context.params instanceof Promise) {
-      // If params is a Promise
-      const resolved = await context.params;
-      id = resolved.id;
-    } else {
-      id = (context as any).params.id;
-    }
+    const { id } = context.params;
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -55,16 +48,10 @@ export async function GET(
 // Delete user by ID (Admin only)
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } } | { params: Promise<{ id: string }> }
+  context: { params: { id: string } }
 ) {
   try {
-    let id: string;
-    if ('params' in context && context.params instanceof Promise) {
-      const resolved = await context.params;
-      id = resolved.id;
-    } else {
-      id = (context as any).params.id;
-    }
+    const { id } = context.params;
 
     // First delete the profile
     await prisma.profile.deleteMany({
