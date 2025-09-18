@@ -4,6 +4,9 @@ import type { Profile } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Get all users/profiles
 export async function GET(request: Request) {
   try {

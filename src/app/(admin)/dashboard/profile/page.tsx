@@ -1,8 +1,10 @@
 
-
 "use client";
 
 import React, { useEffect, useState } from "react";
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { FiUser, FiMail, FiMapPin, FiBriefcase, FiBookOpen, FiHeart, FiPhone } from "react-icons/fi";
 
 interface User {

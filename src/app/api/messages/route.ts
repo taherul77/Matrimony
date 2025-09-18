@@ -84,8 +84,44 @@ export async function POST(req: Request) {
       }
     }
 
+    // Find or create chat room
+    let chatRoom = await prisma.chatRoom.findFirst({
+      where: {
+        OR: [
+          { user1Id: senderId, user2Id: receiverId },
+          { user1Id: receiverId, user2Id: senderId }
+        ]
+      }
+    });
+
+    if (!chatRoom) {
+      chatRoom = await prisma.chatRoom.create({
+        data: {
+          user1Id: senderId,
+          user2Id: receiverId,
+          lastMessage: content,
+          lastMessageAt: new Date()
+        }
+      });
+    } else {
+      // Update last message info
+      await prisma.chatRoom.update({
+        where: { id: chatRoom.id },
+        data: {
+          lastMessage: content,
+          lastMessageAt: new Date(),
+          // Increment unread count for the receiver
+          ...(chatRoom.user1Id === receiverId 
+            ? { unreadCount1: { increment: 1 } }
+            : { unreadCount2: { increment: 1 } }
+          )
+        }
+      });
+    }
+
     const message = await prisma.message.create({
       data: {
+        chatRoomId: chatRoom.id,
         senderId,
         receiverId,
         content

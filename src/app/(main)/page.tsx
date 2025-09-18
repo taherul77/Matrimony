@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import ProfileCard from '@/components/ProfileCard';
 import Link from 'next/link';
 /* eslint-disable @next/next/no-img-element */

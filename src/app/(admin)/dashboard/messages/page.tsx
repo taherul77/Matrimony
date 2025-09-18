@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import OptimizedRealTimeChat from '@/components/OptimizedRealTimeChat';
 
 interface User {
