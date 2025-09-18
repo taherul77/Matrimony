@@ -5,6 +5,6 @@
     }
   },
   "env": {
-    "DATABASE_URL": "@database_url"
+    "DATABASE_URL": "mongodb+srv://taherul2317:sufpFPgqZc1ifyoi@cluster0.pdvlcm0.mongodb.net/matrimonial?retryWrites=true&w=majority&appName=Cluster0"
   }
 }
