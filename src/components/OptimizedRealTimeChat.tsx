@@ -38,7 +38,6 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [userTyping, setUserTyping] = useState<string | null>(null);
-  const [isPolling, setIsPolling] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -67,36 +66,13 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
     }
   }, [currentUserId, receiverId]);
 
-  // Initialize messaging system with robust polling fallback
+  // Initialize messaging system with Socket.IO only
   useEffect(() => {
-    let pollingInterval: NodeJS.Timeout | null = null;
     let isComponentMounted = true;
     
-    // Start with polling-first approach since Socket.IO is having issues
-    const startPolling = () => {
-      if (!pollingInterval && isComponentMounted) {
-        console.log('🔄 Starting message polling every 3 seconds');
-        setIsPolling(true);
-        setIsConnected(false);
-        
-        pollingInterval = setInterval(async () => {
-          try {
-            const response = await fetch(`/api/simple-messages?userId=${currentUserId}&otherUserId=${receiverId}`);
-            if (response.ok && isComponentMounted) {
-              const data = await response.json();
-              setMessages(data.messages || []);
-            }
-          } catch (error) {
-            console.error('Polling error:', error);
-          }
-        }, 3000);
-      }
-    };
-
-    // Try Socket.IO first, but fallback to polling quickly if it fails
-    const trySocketIO = async () => {
+    const initializeSocketIO = async () => {
       try {
-        console.log('🚀 Attempting Socket.IO connection...');
+        console.log('🚀 Connecting to integrated Socket.IO server...');
 
         // Pre-hit the socket endpoint to ensure the server initializes
         try {
@@ -105,102 +81,83 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
           // ignore
         }
 
+        // Connect to the integrated Socket.IO server
         socketRef.current = io('/', {
-          path: '/api/socketio',
-          addTrailingSlash: false,
-          timeout: 10000,
-          // Force long-polling transport to avoid websocket failures in some environments
-          transports: ['polling'],
-          upgrade: false,
-          withCredentials: true,
+          path: '/api/socket',
+          forceNew: true,
+          timeout: 20000,
+          transports: ['websocket', 'polling'],
+          upgrade: true,
+          query: {
+            userId: currentUserId
+          }
         });
 
         const socket = socketRef.current;
-        let socketConnected = false;
-        // As a safety net, if still not connected after 10s, enable manual HTTP polling
-        const connectionTimeout = setTimeout(() => {
-          if (!socketConnected) {
-            console.log('⏰ No Socket.IO connection after 10s - enabling HTTP polling fallback');
-            startPolling();
-          }
-        }, 10000);
-
+        
         socket.on('connect', () => {
-          socketConnected = true;
-          clearTimeout(connectionTimeout);
-          console.log('✅ Socket.IO connected successfully');
+          console.log('✅ Socket.IO connected successfully!');
           setIsConnected(true);
-          
-          // Clear polling when real-time connects
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            pollingInterval = null;
-            setIsPolling(false);
-          }
           
           // Join the chat room
           const roomId = generateRoomId(currentUserId, receiverId);
-          socket.emit('join-room', roomId);
+          socket.emit('chat:join', { chatRoomId: roomId });
+          console.log(`📡 Joined chat room: ${roomId}`);
         });
 
-        socket.on('new-message', (message: Message) => {
+        socket.on('message:received', (data: { message: Message }) => {
           if (isComponentMounted) {
-            console.log('📨 Real-time message received');
-            setMessages(prev => [...prev, message]);
+            console.log('📨 New message received:', data.message);
+            setMessages(prev => [...prev, data.message]);
             scrollToBottom();
           }
         });
 
-        socket.on('user-typing', (data: { userId: string; userName: string; isTyping: boolean }) => {
+        socket.on('typing:received', (data: { userId: string; isTyping: boolean }) => {
           if (data.userId !== currentUserId && isComponentMounted) {
-            setUserTyping(data.isTyping ? data.userName : null);
+            setUserTyping(data.isTyping ? 'User' : null);
           }
         });
 
         socket.on('disconnect', (reason) => {
           console.log('❌ Socket.IO disconnected:', reason);
           setIsConnected(false);
-          // don't immediately switch to manual polling; let Socket.IO attempt reconnection
         });
 
         socket.on('connect_error', (error) => {
-          console.log('❌ Socket.IO connect_error:', error.message);
-          // allow Socket.IO to fallback to polling automatically and/or retry
+          console.error('❌ Socket.IO connect_error:', error.message);
+          console.error('❌ Full error:', error);
+          setIsConnected(false);
+        });
+
+        socket.on('reconnect', () => {
+          console.log('✅ Socket.IO reconnected!');
+          setIsConnected(true);
+          // Rejoin the chat room after reconnection
+          const roomId = generateRoomId(currentUserId, receiverId);
+          socket.emit('chat:join', { chatRoomId: roomId });
         });
 
         socket.io.on('reconnect_attempt', (attempt) => {
-          console.log('↩️ Reconnect attempt', attempt);
-        });
-
-        socket.io.on('reconnect_failed', () => {
-          console.log('❌ Reconnect failed - enabling HTTP polling fallback');
-          startPolling();
+          console.log(`↩️ Reconnect attempt ${attempt}`);
         });
 
       } catch (error) {
-        console.log('❌ Socket.IO initialization failed - using polling:', error);
-        startPolling();
+        console.error('❌ Socket.IO initialization failed:', error);
+        setIsConnected(false);
       }
     };
 
-    // Start with a small delay
-    const initTimeout = setTimeout(() => {
-      trySocketIO();
-    }, 500);
+    // Initialize connection
+    initializeSocketIO();
 
     return () => {
       isComponentMounted = false;
-      clearTimeout(initTimeout);
-      
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setIsPolling(false);
-      }
     };
-  }, [currentUserId, receiverId]); // Remove fetchMessages from dependencies
+  }, [currentUserId, receiverId]);
 
   // Generate consistent room ID
   const generateRoomId = (user1: string, user2: string) => {
@@ -246,9 +203,8 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
     if (socketRef.current && isConnected) {
       const roomId = generateRoomId(currentUserId, receiverId);
       socketRef.current.emit('typing', {
-        roomId,
+        chatRoomId: roomId,
         userId: currentUserId,
-        userName: 'You',
         isTyping: true
       });
 
@@ -261,9 +217,8 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
       typingTimeoutRef.current = setTimeout(() => {
         if (socketRef.current && isConnected) {
           socketRef.current.emit('typing', {
-            roomId,
+            chatRoomId: roomId,
             userId: currentUserId,
-            userName: 'You',
             isTyping: false
           });
         }
@@ -297,16 +252,15 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
         // Emit the message via Socket.IO for real-time delivery
         if (socketRef.current && isConnected) {
           const roomId = generateRoomId(currentUserId, receiverId);
-          socketRef.current.emit('send-message', {
-            roomId,
+          socketRef.current.emit('message:send', {
+            chatRoomId: roomId,
             message: data.message
           });
-          console.log('📤 Message sent via Socket.IO (real-time)');
-        } else {
-          // If socket not connected, add message directly and opponent will get it via polling
-          setMessages(prev => [...prev, data.message]);
-          console.log('📤 Message sent via HTTP - opponent will see via polling');
+          console.log('📤 Message sent via Socket.IO');
         }
+        
+        // Add message to local state for immediate UI update
+        setMessages(prev => [...prev, data.message]);
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to send message');
@@ -351,30 +305,26 @@ const OptimizedRealTimeChat: React.FC<RealTimeChatProps> = ({
           <h3 className="font-semibold text-gray-900">{receiverName}</h3>
           <p className="text-sm text-gray-500">
             {userTyping ? `${userTyping} is typing...` : 
-             isConnected ? '🚀 Real-time connected' : 
-             isPolling ? '🔄 Auto-checking messages (3s)' : '⏳ Connecting...'}
+             isConnected ? '🚀 Real-time connected' : '⏳ Connecting...'}
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${
-            isConnected ? 'bg-green-500 animate-pulse' : 
-            isPolling ? 'bg-orange-500 animate-bounce' : 'bg-gray-400'
+            isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
           }`} title={
-            isConnected ? 'Real-time active' : 
-            isPolling ? 'Auto-checking for messages' : 'Connecting...'
+            isConnected ? 'Real-time active' : 'Connecting...'
           }></div>
           <span className="text-xs text-gray-500">
-            {isConnected ? '🚀' : isPolling ? '🔄' : '⏳'}
+            {isConnected ? '🚀' : '⏳'}
           </span>
         </div>
-        
         {/* Connection status */}
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${
-            isConnected ? 'bg-green-500' : 'bg-orange-500'
-          }`} title={isConnected ? 'Real-time mode' : 'Polling mode'}></div>
+            isConnected ? 'bg-green-500' : 'bg-gray-400'
+          }`} title={isConnected ? 'Real-time mode' : 'Connecting...'}></div>
           <span className="text-xs text-gray-500">
-            {isConnected ? 'Real-time' : 'Polling'}
+            {isConnected ? 'Real-time' : 'Connecting'}
           </span>
           <button
             onClick={() => fetchMessages()}

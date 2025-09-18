@@ -72,6 +72,7 @@ export async function POST(req: Request) {
     try {
       currentUser = JSON.parse(userCookie.value);
     } catch (error) {
+      console.error("Session parsing error:", error);
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
@@ -86,6 +87,8 @@ export async function POST(req: Request) {
     if (!packageId) {
       return NextResponse.json({ error: "Package ID required" }, { status: 400 });
     }
+
+    console.log("Creating subscription for user:", userId, "package:", packageId);
 
     const user = await prisma.user.findUnique({
       where: { id: userId }
@@ -107,11 +110,19 @@ export async function POST(req: Request) {
     const startDate = new Date();
     const endDate = new Date(startDate.getTime() + (packageData.duration * 24 * 60 * 60 * 1000));
 
-    // Deactivate existing subscription
-    await prisma.subscription.updateMany({
-      where: { userId: userId },
-      data: { isActive: false }
+    console.log("Subscription dates:", { startDate, endDate });
+
+    // Check for existing subscription and delete it first to avoid unique constraint
+    const existingSubscription = await prisma.subscription.findUnique({
+      where: { userId: userId }
     });
+
+    if (existingSubscription) {
+      console.log("Deleting existing subscription:", existingSubscription.id);
+      await prisma.subscription.delete({
+        where: { userId: userId }
+      });
+    }
 
     // Create new subscription
     const subscription = await prisma.subscription.create({
@@ -128,9 +139,19 @@ export async function POST(req: Request) {
       }
     });
 
+    console.log("Subscription created successfully:", subscription.id);
+
     return NextResponse.json({ subscription });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Subscription error:", error);
-    return NextResponse.json({ error: "Failed to create subscription" }, { status: 500 });
+    console.error("Error details:", {
+      name: error?.name,
+      message: error?.message,
+      stack: error?.stack
+    });
+    return NextResponse.json({ 
+      error: "Failed to create subscription", 
+      details: error?.message || "Unknown error"
+    }, { status: 500 });
   }
 }
