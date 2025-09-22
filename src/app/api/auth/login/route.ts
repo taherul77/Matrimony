@@ -48,14 +48,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
+    // Generate JWT token with shorter expiration (1 hour)
     const token = jwt.sign(
       { 
         userId: user.id, 
         email: user.email 
       },
       process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
+      { expiresIn: '1h' }
     );
 
     // Remove password from user object
@@ -71,12 +71,13 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set cookie
+    // Set cookie with a short expiration for testing
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      maxAge: 60 * 60, // 1 hour to match JWT expiration
+      path: '/' // Explicitly set path
     });
 
     return response;

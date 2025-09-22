@@ -17,14 +17,15 @@ export async function GET(request: Request) {
 
     let decoded: any;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+      decoded = jwt.verify(token, jwtSecret);
     } catch {
       return NextResponse.json({ isLoggedIn: false });
     }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, role: true }
     });
     if (!user) {
       return NextResponse.json({ isLoggedIn: false });

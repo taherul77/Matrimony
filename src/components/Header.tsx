@@ -3,14 +3,16 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FiMenu, FiX, FiUser, FiHeart, FiSearch, FiLogOut, FiChevronDown, FiSettings, FiUsers, FiBarChart } from 'react-icons/fi';
+import { useUser } from '../context/UserContext';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Use the UserContext instead of local state
+  const { user, isLoggedIn, isLoading, refetchUser } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,20 +20,6 @@ const Header = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    // Check if user is logged in
-    const checkAuthStatus = () => {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsLoggedIn(true);
-      }
-    };
-
-    checkAuthStatus();
   }, []);
 
   useEffect(() => {
@@ -54,12 +42,17 @@ const Header = () => {
       // Call logout API
       await fetch('/api/auth/logout', { method: 'POST' });
       
-      // Clear local storage
+      // Clear session storage (instead of localStorage)
+      sessionStorage.removeItem('user');
+      
+      // Clear localStorage as well (in case there's old data)
       localStorage.removeItem('user');
       
-      // Update state
-      setIsLoggedIn(false);
-      setUser(null);
+      // Clear user cookie
+      document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      // Refetch user data to update the context
+      await refetchUser();
       
       // Redirect to home
       window.location.href = '/';

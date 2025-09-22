@@ -32,7 +32,16 @@ const AppHeader: React.FC = () => {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    
+    // Clear session storage (instead of localStorage)
+    sessionStorage.removeItem("user");
+    
+    // Clear localStorage as well (in case there's old data)
     localStorage.removeItem("user");
+    
+    // Clear user cookie
+    document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    
     setUser(null);
     router.push("/login");
   };
