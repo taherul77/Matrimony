@@ -1,5 +1,6 @@
 import React from "react";
 import { useSidebar } from "../context/SidebarContext";
+import { useUser } from "../context/UserContext";
 import { 
   FiHome, 
   FiUser, 
@@ -31,26 +32,23 @@ import { useClientOnly } from "../hooks/useClientOnly";
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, toggleMobileSidebar } = useSidebar();
-  const [role, setRole] = React.useState<string | null>(null);
-  const [userId, setUserId] = React.useState<string | null>(null);
+  const { user, isLoading: userLoading } = useUser();
   const [currentPackage, setCurrentPackage] = React.useState<string>('free');
   const isClient = useClientOnly();
   
-  const { permissions, loading } = useBusinessLogic(userId || undefined);
+  const role = user?.role || 'user';
+  const userId = user?.id;
+  
+  const { permissions, loading: permissionsLoading } = useBusinessLogic(userId);
+  
+  // Combined loading state
+  const loading = userLoading || permissionsLoading;
 
   React.useEffect(() => {
-    if (isClient) {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          setRole(user.role || 'user');
-          setUserId(user.id);
-          setCurrentPackage(user.currentPackage || 'free');
-        } catch {}
-      }
-    }
-  }, [isClient]);
+    // You can fetch package info here if needed
+    // For now, defaulting to 'free'
+    setCurrentPackage('free');
+  }, [user]);
 
   // Package badge component
   const PackageBadge = () => {

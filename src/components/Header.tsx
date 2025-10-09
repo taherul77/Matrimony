@@ -108,7 +108,7 @@ const Header = () => {
                     <FiUser className="text-white text-sm" />
                   </div>
                   <span className="font-medium">
-                    Welcome, {user.name}
+                     {user.name}
                   </span>
                   <FiChevronDown className={`text-sm transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>

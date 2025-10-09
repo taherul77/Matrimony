@@ -26,7 +26,10 @@ export function useBusinessLogic(userId?: string): UseBusinessLogicReturn {
   const lastFetch = useRef<number>(0);
 
   const fetchPermissions = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     
     const now = Date.now();
     const requestKey = `fetch_permissions_${userId}`;
