@@ -221,29 +221,29 @@ const AppSidebar: React.FC = () => {
       premium: true,
       requiresPermission: 'hasPersonalMatchmaker'
     },
-    { 
-      label: "Exclusive Events", 
-      icon: FiCalendar, 
-      href: "/dashboard/vip/events", 
-      subtitle: "VIP meetups & webinars",
-      premium: true,
-      requiresPermission: 'hasEventAccess'
-    },
-    { 
-      label: "Priority Support", 
-      icon: FiHeadphones, 
-      href: "/dashboard/vip/support", 
-      subtitle: "24/7 assistance",
-      premium: true,
-      requiresPermission: 'hasPrioritySupport'
-    },
+    // { 
+    //   label: "Exclusive Events", 
+    //   icon: FiCalendar, 
+    //   href: "/dashboard/vip/events", 
+    //   subtitle: "VIP meetups & webinars",
+    //   premium: true,
+    //   requiresPermission: 'hasEventAccess'
+    // },
+    // { 
+    //   label: "Priority Support", 
+    //   icon: FiHeadphones, 
+    //   href: "/dashboard/vip/support", 
+    //   subtitle: "24/7 assistance",
+    //   premium: true,
+    //   requiresPermission: 'hasPrioritySupport'
+    // },
     
     // Account & Settings
     { type: 'section', label: 'Account' },
-    { label: "Privacy Settings", icon: FiShield, href: "/dashboard/settings/privacy" },
-    { label: "Notifications", icon: FiBell, href: "/dashboard/settings/notifications", badge: true },
+    // { label: "Privacy Settings", icon: FiShield, href: "/dashboard/settings/privacy" },
+    // { label: "Notifications", icon: FiBell, href: "/dashboard/settings/notifications", badge: true },
     { label: "Subscription", icon: FiCreditCard, href: "/dashboard/packages", subtitle: "Manage your plan" },
-    { label: "Settings", icon: FiSettings, href: "/dashboard/settings" },
+    // { label: "Settings", icon: FiSettings, href: "/dashboard/settings" },
   ];
 
   const adminMenu = [
