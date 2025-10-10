@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   FiHeart, 
   FiMessageSquare, 
@@ -12,15 +13,18 @@ import {
   FiFilter,
   FiRefreshCw
 } from 'react-icons/fi';
+import OptimizedRealTimeChat from '@/components/OptimizedRealTimeChat';
+import { useUser } from '@/context/UserContext';
 
 interface Interest {
   id: string;
+  receiverId: string;
   receiverName: string;
   receiverAge: number;
   receiverLocation: string;
   receiverOccupation: string;
   receiverImage: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'accepted' | 'rejected';
   sentDate: string;
   message?: string;
   isVerified: boolean;
@@ -28,9 +32,13 @@ interface Interest {
 }
 
 const InterestsSentPage: React.FC = () => {
+  const router = useRouter();
+  const { user: currentUser } = useUser();
   const [interests, setInterests] = useState<Interest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'declined'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedInterest, setSelectedInterest] = useState<Interest | null>(null);
 
   useEffect(() => {
     fetchSentInterests();
@@ -43,7 +51,22 @@ const InterestsSentPage: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setInterests(data.interests || []);
+        // Transform the API response to match our interface
+        const transformedInterests = (data.interests || []).map((interest: any) => ({
+          id: interest.id,
+          receiverId: interest.receiverId,
+          receiverName: interest.receiver?.name || 'Unknown',
+          receiverAge: interest.receiver?.age || 0,
+          receiverLocation: interest.receiver?.profile?.location || 'Location not specified',
+          receiverOccupation: interest.receiver?.profile?.occupation || 'Occupation not specified',
+          receiverImage: interest.receiver?.profileImage || interest.receiver?.profile?.photos?.[0] || '/default-avatar.png',
+          status: interest.status,
+          sentDate: interest.createdAt,
+          message: interest.message,
+          isVerified: interest.receiver?.isVip || false,
+          isPremium: interest.receiver?.isVip || false
+        }));
+        setInterests(transformedInterests);
       } else {
         console.error('Failed to fetch sent interests');
         setInterests([]);
@@ -56,11 +79,22 @@ const InterestsSentPage: React.FC = () => {
     }
   };
 
+  const handleMessage = (interest: Interest) => {
+    // Open chat modal directly on this page
+    setSelectedInterest(interest);
+    setShowChatModal(true);
+  };
+
+  const handleViewProfile = (interest: Interest) => {
+    // Navigate to the profile page  
+    router.push(`/profile/${interest.receiverId}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'accepted':
         return 'bg-green-100 text-green-800';
-      case 'declined':
+      case 'rejected':
         return 'bg-red-100 text-red-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
@@ -73,7 +107,7 @@ const InterestsSentPage: React.FC = () => {
     switch (status) {
       case 'accepted':
         return <FiCheck className="w-4 h-4" />;
-      case 'declined':
+      case 'rejected':
         return <FiX className="w-4 h-4" />;
       case 'pending':
         return <FiClock className="w-4 h-4" />;
@@ -91,7 +125,7 @@ const InterestsSentPage: React.FC = () => {
     total: interests.length,
     pending: interests.filter(i => i.status === 'pending').length,
     accepted: interests.filter(i => i.status === 'accepted').length,
-    declined: interests.filter(i => i.status === 'declined').length
+    rejected: interests.filter(i => i.status === 'rejected').length
   };
 
   if (loading) {
@@ -158,8 +192,8 @@ const InterestsSentPage: React.FC = () => {
                 <FiX className="w-6 h-6 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Declined</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.declined}</p>
+                <p className="text-sm font-medium text-gray-600">Rejected</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
               </div>
             </div>
           </div>
@@ -175,7 +209,7 @@ const InterestsSentPage: React.FC = () => {
                   { key: 'all', label: 'All Interests' },
                   { key: 'pending', label: 'Pending' },
                   { key: 'accepted', label: 'Accepted' },
-                  { key: 'declined', label: 'Declined' }
+                  { key: 'rejected', label: 'Rejected' }
                 ].map(({ key, label }) => (
                   <button
                     key={key}
@@ -266,12 +300,18 @@ const InterestsSentPage: React.FC = () => {
                     
                     <div className="flex space-x-2">
                       {interest.status === 'accepted' && (
-                        <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button 
+                          onClick={() => handleMessage(interest)}
+                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
                           <FiMessageSquare className="w-4 h-4 mr-2" />
                           Message
                         </button>
                       )}
-                      <button className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleViewProfile(interest)}
+                        className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
                         <FiUser className="w-4 h-4 mr-2" />
                         View Profile
                       </button>
@@ -301,6 +341,45 @@ const InterestsSentPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Chat Modal */}
+      {showChatModal && selectedInterest && currentUser && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center space-x-4">
+                <img
+                  src={selectedInterest.receiverImage || '/default-avatar.png'}
+                  alt={selectedInterest.receiverName}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">{selectedInterest.receiverName}</h3>
+                  <p className="text-gray-600">Start a conversation</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowChatModal(false);
+                  setSelectedInterest(null);
+                }}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <FiX className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-hidden">
+              <OptimizedRealTimeChat
+                currentUserId={currentUser.id}
+                receiverId={selectedInterest.receiverId}
+                receiverName={selectedInterest.receiverName}
+                receiverImage={selectedInterest.receiverImage}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

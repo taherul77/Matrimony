@@ -17,7 +17,12 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   useEffect(() => {
     setIsClient(true);
     try {
-      const item = window.localStorage.getItem(key);
+      // Prefer sessionStorage for transient auth/session data (login uses sessionStorage)
+      // but fall back to localStorage for older code that still writes there.
+      let item: string | null = null;
+      if (typeof window !== 'undefined') {
+        item = window.sessionStorage.getItem(key) ?? window.localStorage.getItem(key);
+      }
       if (item) {
         setStoredValue(JSON.parse(item));
       }
@@ -31,7 +36,17 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        // Mirror writes to both storages so callers reading either storage will see the value.
+        try {
+          window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
+        } catch (e) {
+          // ignore sessionStorage write failures (e.g., disabled)
+        }
+        try {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        } catch (e) {
+          // ignore localStorage write failures
+        }
       }
     } catch (error) {
       console.error(`Error setting localStorage key "${key}":`, error);

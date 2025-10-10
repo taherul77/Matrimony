@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FaCrown } from 'react-icons/fa';
 import { FiHeart, FiX, FiEye, FiMessageSquare, FiStar, FiMapPin, FiCalendar, FiBookOpen, FiBriefcase } from 'react-icons/fi';
 import Image from 'next/image';
+import { useUser } from '@/context/UserContext';
 
 interface HandpickedMatch {
   id: string;
@@ -25,17 +26,19 @@ interface HandpickedMatch {
 }
 
 const DashboardHandpickedMatchesPage: React.FC = () => {
+  const { user, isLoading: userLoading, isLoggedIn } = useUser();
   const [matches, setMatches] = useState<HandpickedMatch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<HandpickedMatch | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHandpickedMatches = async () => {
+      if (!user?.id) return;
+      
       try {
         setLoading(true);
-        const response = await fetch('/api/vip/handpicked-matches');
+        const response = await fetch(`/api/vip/handpicked-matches?userId=${user.id}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -50,26 +53,15 @@ const DashboardHandpickedMatchesPage: React.FC = () => {
       }
     };
 
-    // Get user ID from localStorage/cookies
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          setCurrentUserId(user.id);
-          fetchHandpickedMatches();
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
+    if (isLoggedIn && user) {
+      fetchHandpickedMatches();
+    } else if (!userLoading) {
+      setLoading(false);
     }
-  }, []);
+  }, [user, isLoggedIn, userLoading]);
 
   const handleInterest = async (matchId: string, action: 'like' | 'pass') => {
-    if (!currentUserId) return;
+    if (!user?.id) return;
 
     try {
       setActionLoading(matchId);
@@ -81,7 +73,7 @@ const DashboardHandpickedMatchesPage: React.FC = () => {
         body: JSON.stringify({
           matchId,
           action,
-          userId: currentUserId
+          userId: user.id
         }),
       });
 
@@ -108,7 +100,18 @@ const DashboardHandpickedMatchesPage: React.FC = () => {
     setSelectedMatch(match);
   };
 
-  if (!currentUserId) {
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <div className="text-xl text-gray-600">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

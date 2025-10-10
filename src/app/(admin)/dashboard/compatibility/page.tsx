@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiHeart, FiUser, FiStar, FiTrendingUp, FiEye, FiMessageSquare, FiMapPin, FiCalendar } from 'react-icons/fi';
 import Image from 'next/image';
+import { useUser } from '../../../../context/UserContext';
 
 interface CompatibilityMatch {
   id: string;
@@ -36,55 +37,54 @@ interface UserCompatibilityProfile {
 }
 
 const DashboardCompatibilityPage: React.FC = () => {
+  const { user, isLoading: userLoading } = useUser();
   const [matches, setMatches] = useState<CompatibilityMatch[]>([]);
   const [userProfile, setUserProfile] = useState<UserCompatibilityProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<CompatibilityMatch | null>(null);
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
-  useEffect(() => {
-    const fetchCompatibilityData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch compatibility matches
-        const matchesResponse = await fetch('/api/compatibility/matches');
-        if (matchesResponse.ok) {
-          const matchesData = await matchesResponse.json();
-          setMatches(matchesData.matches || []);
-        }
-
-        // Fetch user compatibility profile
-        const profileResponse = await fetch('/api/compatibility/profile');
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          setUserProfile(profileData.profile || null);
-        }
-      } catch (error) {
-        console.error('Error fetching compatibility data:', error);
-      } finally {
-        setLoading(false);
+  const fetchCompatibilityData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch compatibility matches
+      const matchesResponse = await fetch('/api/compatibility/matches', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (matchesResponse.ok) {
+        const matchesData = await matchesResponse.json();
+        setMatches(matchesData.matches || []);
       }
-    };
 
-    // Get user ID from localStorage/cookies
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          setCurrentUserId(user.id);
-          fetchCompatibilityData();
-        } catch (error) {
-          console.error('Error parsing user data:', error);
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
+      // Fetch user compatibility profile
+      const profileResponse = await fetch('/api/compatibility/profile', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json();
+        setUserProfile(profileData.profile || null);
       }
+    } catch (error) {
+      console.error('Error fetching compatibility data:', error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!userLoading && user?.id) {
+      fetchCompatibilityData();
+    }
+  }, [userLoading, user?.id, fetchCompatibilityData]);
 
   const getCompatibilityLevel = (score: number): { level: string; color: string; bgColor: string } => {
     if (score >= 80) return { level: 'Excellent', color: 'text-green-600', bgColor: 'bg-green-100' };
@@ -102,7 +102,7 @@ const DashboardCompatibilityPage: React.FC = () => {
   });
 
   const handleSendInterest = async (matchId: string) => {
-    if (!currentUserId) return;
+    if (!user?.id) return;
 
     try {
       const response = await fetch('/api/interests', {
@@ -110,16 +110,18 @@ const DashboardCompatibilityPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
-          targetUserId: matchId,
-          sourceUserId: currentUserId
+          receiverId: matchId,
+          message: 'I found our compatibility score interesting and would like to connect!'
         }),
       });
 
       if (response.ok) {
         alert('Interest sent successfully!');
       } else {
-        alert('Failed to send interest');
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to send interest');
       }
     } catch (error) {
       console.error('Error sending interest:', error);
@@ -127,22 +129,22 @@ const DashboardCompatibilityPage: React.FC = () => {
     }
   };
 
-  if (!currentUserId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-xl text-gray-600">Please log in to view compatibility matches</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  if (userLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <div className="text-xl text-gray-600">Analyzing compatibility...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user?.id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-xl text-gray-600">Please log in to view compatibility matches</div>
         </div>
       </div>
     );

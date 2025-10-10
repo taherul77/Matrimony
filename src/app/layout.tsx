@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-
+// Configure fonts with fallbacks and error handling
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ['system-ui', 'arial'],
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  display: "swap", 
+  fallback: ['monospace'],
+  preload: true,
 });
 
 export const metadata: Metadata = {

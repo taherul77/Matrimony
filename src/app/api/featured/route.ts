@@ -51,23 +51,32 @@ export async function GET(request: Request) {
     const result = featuredProfiles.map((profile: any) => {
       const subscription = profile.user?.subscription;
       const packageInfo = subscription?.package;
+      const priorityLevel = packageInfo?.priorityLevel || 0;
+
+      // Determine featured level based on priority level
+      let featuredLevel = 'bronze';
+      if (priorityLevel >= 4) featuredLevel = 'gold';
+      else if (priorityLevel >= 3) featuredLevel = 'silver';
 
       return {
-        id: profile.id,
-        userId: profile.userId,
-        name: profile.user?.name,
-        age: profile.user?.age,
-        gender: profile.user?.gender,
-        bio: profile.user?.bio,
-        photos: profile.photos || [],
-        location: profile.location,
-        occupation: profile.occupation,
-        education: profile.education,
-        religion: profile.religion,
+        id: profile.userId, // Use userId as profile id for frontend
+        name: profile.user?.name || 'Anonymous',
+        age: profile.user?.age || 0,
+        location: profile.location || 'Location not specified',
+        occupation: profile.occupation || 'Not specified',
+        education: profile.education || 'Not specified',
+        profileImage: profile.user?.profileImage || profile.photos?.[0] || '/uploads/default-avatar.jpg',
+        isVerified: profile.user?.profileImage ? true : false, // Simple verification logic
+        isPremium: priorityLevel >= 2, // Gold+ packages
+        featuredLevel: featuredLevel as 'gold' | 'silver' | 'bronze',
+        profileViews: Math.floor(Math.random() * 1000) + 100, // Placeholder - you can implement real view tracking
+        successRate: Math.floor(Math.random() * 30) + 70, // Placeholder - you can implement real success rate calculation
+        lastActive: profile.user?.lastSeen ? new Date(profile.user.lastSeen).toLocaleDateString() : 'recently',
+        bio: profile.user?.bio || 'No bio available',
         
         // Package highlights
         packageName: packageInfo?.name || 'Free',
-        priorityLevel: packageInfo?.priorityLevel || 0,
+        priorityLevel: priorityLevel,
         hasVipBadge: packageInfo?.hasVipBadge || false,
         hasProfileHighlight: packageInfo?.hasProfileHighlight || false,
         isFeatured: true

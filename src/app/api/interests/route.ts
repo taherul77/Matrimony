@@ -68,10 +68,36 @@ export async function GET(request: Request) {
       where: whereClause,
       include: {
         sender: {
-          select: { id: true, name: true, email: true }
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            age: true,
+            profileImage: true,
+            isVip: true,
+            profile: {
+              select: {
+                location: true,
+                occupation: true
+              }
+            }
+          }
         },
         receiver: {
-          select: { id: true, name: true, email: true }
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            age: true,
+            profileImage: true,
+            isVip: true,
+            profile: {
+              select: {
+                location: true,
+                occupation: true
+              }
+            }
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -189,6 +215,130 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error sending interest:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// Update interest status (accept/decline)
+export async function PUT(request: Request) {
+  try {
+    const { interestId, status } = await request.json();
+    
+    // Get token from cookies
+    const cookies = request.headers.get('cookie');
+    const token = cookies?.split(';')
+      .find(c => c.trim().startsWith('token='))
+      ?.split('=')[1];
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+    const userId = decoded.userId;
+
+    if (!interestId || !status) {
+      return NextResponse.json(
+        { error: 'Interest ID and status are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate status
+    const validStatuses = ['accepted', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: 'Status must be either "accepted" or "rejected"' },
+        { status: 400 }
+      );
+    }
+
+    // Find the interest and verify the user is the receiver
+    const interest = await prisma.interest.findUnique({
+      where: { id: interestId },
+      include: {
+        sender: { select: { id: true, name: true, email: true } },
+        receiver: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    if (!interest) {
+      return NextResponse.json(
+        { error: 'Interest not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if the current user is the receiver of this interest
+    if (interest.receiverId !== userId) {
+      return NextResponse.json(
+        { error: 'You can only respond to interests sent to you' },
+        { status: 403 }
+      );
+    }
+
+    // Update the interest status
+    const updatedInterest = await prisma.interest.update({
+      where: { id: interestId },
+      data: { status },
+      include: {
+        sender: { select: { id: true, name: true, email: true } },
+        receiver: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    // If accepted, create a match record (optional feature)
+    if (status === 'accepted') {
+      try {
+        // Check if match already exists
+        const existingMatch = await prisma.match.findFirst({
+          where: {
+            OR: [
+              { userAId: interest.senderId, userBId: interest.receiverId },
+              { userAId: interest.receiverId, userBId: interest.senderId }
+            ]
+          }
+        });
+
+        if (!existingMatch) {
+          await prisma.match.create({
+            data: {
+              userAId: interest.senderId,
+              userBId: interest.receiverId,
+              status: 'accepted'
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Error creating match record:', error);
+        // Continue even if match creation fails
+      }
+    }
+
+    // Create notification for sender (will be enabled after Prisma regeneration)
+    try {
+      // await prisma.notification.create({
+      //   data: {
+      //     userId: interest.senderId,
+      //     type: status === 'accepted' ? 'interest_accepted' : 'interest_rejected',
+      //     title: status === 'accepted' ? 'Interest Accepted!' : 'Interest Response',
+      //     content: status === 'accepted' 
+      //       ? `${interest.receiver.name} accepted your interest!`
+      //       : `${interest.receiver.name} responded to your interest`,
+      //     data: JSON.stringify({ interestId, receiverId: userId })
+      //   }
+      // });
+    } catch (error) {
+      console.log("Notification creation temporarily disabled");
+    }
+
+    return NextResponse.json({
+      message: `Interest ${status} successfully`,
+      interest: updatedInterest
+    });
+
+  } catch (error) {
+    console.error('Error updating interest:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

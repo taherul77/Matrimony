@@ -17,7 +17,8 @@ import {
   FiTrendingUp
 } from 'react-icons/fi';
 import { FaCrown } from 'react-icons/fa';
-import { useBusinessLogic } from '@/hooks/useBusinessLogic';
+import { useBusinessLogic } from '../../../../hooks/useBusinessLogic';
+import { useUser } from '../../../../context/UserContext';
 
 interface FeaturedProfile {
   id: string;
@@ -37,10 +38,13 @@ interface FeaturedProfile {
 }
 
 const FeaturedProfilesPage: React.FC = () => {
+  const { user, isLoading: userLoading } = useUser();
   const [profiles, setProfiles] = useState<FeaturedProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'gold' | 'silver' | 'bronze'>('all');
-  const { permissions } = useBusinessLogic();
+  const { permissions, loading: permissionsLoading } = useBusinessLogic(user?.id);
+
+
 
   useEffect(() => {
     fetchFeaturedProfiles();
@@ -92,20 +96,50 @@ const FeaturedProfilesPage: React.FC = () => {
     }
   };
 
-  const filteredProfiles = profiles.filter(profile => {
+  const filteredProfiles = (profiles || []).filter(profile => {
     if (filter === 'all') return true;
     return profile.featuredLevel === filter;
   });
 
   const stats = {
-    total: profiles.length,
-    gold: profiles.filter(p => p.featuredLevel === 'gold').length,
-    silver: profiles.filter(p => p.featuredLevel === 'silver').length,
-    bronze: profiles.filter(p => p.featuredLevel === 'bronze').length
+    total: profiles?.length || 0,
+    gold: profiles?.filter(p => p.featuredLevel === 'gold').length || 0,
+    silver: profiles?.filter(p => p.featuredLevel === 'silver').length || 0,
+    bronze: profiles?.filter(p => p.featuredLevel === 'bronze').length || 0
   };
 
+  // Show loading while checking user authentication and permissions
+  if (userLoading || permissionsLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="text-xl text-gray-600">Loading Featured Profiles...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is authenticated
+  if (!user?.id) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-8 bg-white rounded-lg shadow-sm border">
+          <FiUser className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+          <p className="text-gray-600 mb-6">
+            Please log in to access featured profiles.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Check if user has access to featured profiles
-  if (!permissions?.isFeatured) {
+  // Allow access if permissions say so, OR if user is VIP/has VIP badge (temporary workaround)
+  const hasFeatureAccess = permissions?.isFeatured || permissions?.hasVipBadge || (permissions?.priorityLevel && permissions.priorityLevel >= 3);
+  
+  if (!hasFeatureAccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center p-8 bg-white rounded-lg shadow-sm border">
@@ -117,17 +151,6 @@ const FeaturedProfilesPage: React.FC = () => {
           <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
             Upgrade to Premium
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <div className="text-xl text-gray-600">Loading Featured Profiles...</div>
         </div>
       </div>
     );
@@ -243,8 +266,8 @@ const FeaturedProfilesPage: React.FC = () => {
               {/* Featured Badge */}
               <div className="relative">
                 <img
-                  src={profile.profileImage}
-                  alt={profile.name}
+                  src={profile.profileImage || '/uploads/default-avatar.jpg'}
+                  alt={profile.name || 'Profile'}
                   className="w-full h-64 object-cover"
                 />
                 <div className="absolute top-3 left-3">
@@ -271,26 +294,26 @@ const FeaturedProfilesPage: React.FC = () => {
               
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-semibold text-gray-900">{profile.name}</h3>
-                  <span className="text-gray-500 text-sm">{profile.age} years</span>
+                  <h3 className="text-xl font-semibold text-gray-900">{profile.name || 'Anonymous'}</h3>
+                  <span className="text-gray-500 text-sm">{profile.age || 0} years</span>
                 </div>
                 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-gray-600 text-sm">
                     <FiMapPin className="w-4 h-4 mr-2" />
-                    {profile.location}
+                    {profile.location || 'Location not specified'}
                   </div>
                   <div className="text-gray-600 text-sm">
-                    <strong>Occupation:</strong> {profile.occupation}
+                    <strong>Occupation:</strong> {profile.occupation || 'Not specified'}
                   </div>
                   <div className="text-gray-600 text-sm">
-                    <strong>Education:</strong> {profile.education}
+                    <strong>Education:</strong> {profile.education || 'Not specified'}
                   </div>
                 </div>
 
                 {/* Bio */}
                 <div className="mb-4">
-                  <p className="text-gray-700 text-sm line-clamp-3">{profile.bio}</p>
+                  <p className="text-gray-700 text-sm line-clamp-3">{profile.bio || 'No bio available'}</p>
                 </div>
 
                 {/* Stats */}
@@ -300,20 +323,20 @@ const FeaturedProfilesPage: React.FC = () => {
                       <FiEye className="w-4 h-4 text-blue-500 mr-1" />
                       <span className="text-sm font-medium text-gray-600">Views</span>
                     </div>
-                    <div className="text-lg font-bold text-gray-900">{profile.profileViews.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-gray-900">{(profile.profileViews || 0).toLocaleString()}</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
                       <span className="text-sm font-medium text-gray-600">Success</span>
                     </div>
-                    <div className="text-lg font-bold text-gray-900">{profile.successRate}%</div>
+                    <div className="text-lg font-bold text-gray-900">{profile.successRate || 0}%</div>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <span className="text-xs text-gray-500">Active {profile.lastActive}</span>
+                  <span className="text-xs text-gray-500">Active {profile.lastActive || 'recently'}</span>
                   <div className="flex space-x-2">
                     <button className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                       <FiHeart className="w-4 h-4" />
