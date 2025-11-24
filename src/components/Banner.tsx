@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import ImageCarousel from './ImageCarousel';
+
 import ThreeDCarousel from './ThreeDCarousel';
 
 type BannerProps = {
