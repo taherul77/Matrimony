@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { useState } from 'react';
+import { useUser } from '@/context/UserContext';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
 
@@ -15,6 +16,7 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
+  const { refetchUser } = useUser();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,10 +67,15 @@ const LoginForm = () => {
         // Set user data in session cookies (expires when browser closes)
         document.cookie = `user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; secure; samesite=strict`;
         
+        // Refresh global user context so header updates immediately
+        try {
+          await refetchUser();
+        } catch (e) {
+          // ignore refetch errors
+        }
+
         // Redirect to dashboard or home page
-        setTimeout(() => {
-          router.push('/'); 
-        }, 1500);
+        router.push('/');
       } else {
         setErrors({ general: data.error || 'Login failed' });
       }

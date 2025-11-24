@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 export const dynamic = 'force-dynamic';
 
 import ProfileCard from '@/components/ProfileCard';
+import Banner from '@/components/Banner';
+import HeroStats from '@/components/HeroStats';
 import Link from 'next/link';
 /* eslint-disable @next/next/no-img-element */
 import { FiHeart, FiUsers, FiShield, FiStar, FiMapPin, FiCheckCircle } from 'react-icons/fi';
@@ -66,14 +68,75 @@ export default function Home() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        setLoading(true);
         setError('');
-        
-        // Try to fetch from database
+
+        const cacheKey = 'profiles_home_v1';
+
+        // Try to read from local cache first and show immediately (support old array-only cache)
+        let cachedObj: { version?: string; profiles?: any[] } | null = null;
+        try {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              // legacy cache format (array)
+              setProfiles(parsed);
+              setLoading(false);
+              cachedObj = { profiles: parsed };
+            } else if (parsed && typeof parsed === 'object') {
+              if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
+                setProfiles(parsed.profiles);
+                setLoading(false);
+              }
+              cachedObj = parsed;
+            }
+          }
+        } catch (e) {
+          // ignore localStorage parse errors
+        }
+
+        // First query a lightweight meta endpoint to get a version/hash
+        let serverVersion: string | null = null;
+        try {
+          const metaResp = await fetch('/api/profiles/meta?limit=9');
+          if (metaResp.ok) {
+            const meta = await metaResp.json();
+            serverVersion = meta.version || null;
+          }
+        } catch (e) {
+          serverVersion = null;
+        }
+
+        // If serverVersion matches cached version, skip full fetch
+        if (serverVersion && cachedObj && cachedObj.version === serverVersion) {
+          // cache is fresh, nothing to do
+          return;
+        }
+
+        // Otherwise fetch full profiles and update cache if different
         const response = await fetch('/api/profiles?limit=9');
         if (response.ok) {
           const data = await response.json();
-          setProfiles(data.profiles || []);
+          const newProfiles = data.profiles || [];
+
+          const cachePayload = { version: serverVersion || JSON.stringify(newProfiles), profiles: newProfiles };
+
+          // Compare to existing cache (string comparison) to avoid unnecessary updates
+          let existing = null;
+          try {
+            existing = localStorage.getItem(cacheKey);
+          } catch (e) {
+            existing = null;
+          }
+          const newString = JSON.stringify(cachePayload);
+          if (newString !== existing) {
+            setProfiles(newProfiles);
+            try {
+              localStorage.setItem(cacheKey, newString);
+            } catch (e) {
+              // ignore storage errors
+            }
+          }
         } else {
           setError('Failed to load profiles');
         }
@@ -98,6 +161,23 @@ export default function Home() {
         if (profilesResponse.ok) {
           const data = await profilesResponse.json();
           setProfiles(data.profiles || []);
+          try {
+            // Try to get server version and store combined payload
+            let serverVersion: string | null = null;
+            try {
+              const metaResp = await fetch('/api/profiles/meta?limit=9');
+              if (metaResp.ok) {
+                const meta = await metaResp.json();
+                serverVersion = meta.version || null;
+              }
+            } catch (e) {
+              serverVersion = null;
+            }
+            const cachePayload = { version: serverVersion || JSON.stringify(data.profiles || []), profiles: data.profiles || [] };
+            localStorage.setItem('profiles_home_v1', JSON.stringify(cachePayload));
+          } catch (e) {
+            // ignore storage errors
+          }
         }
       }
     } catch (error) {
@@ -111,48 +191,12 @@ export default function Home() {
   
       
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4">
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-6">
-              Find Your
-              <span className="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent"> Perfect Match</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Join millions of people who have found their life partners through our trusted matrimonial platform. 
-              Start your journey to forever love today.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isLoggedIn ? (
-                <Link href="/profile">
-                  <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 transition-all duration-300">
-                    Go to Dashboard
-                  </button>
-                </Link>
-              ) : (
-                <Link href="/register">
-                  <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 transition-all duration-300">
-                    Start Your Journey
-                  </button>
-                </Link>
-              )}
-              <Link href="/search">
-                <button className="border-2 border-pink-500 text-pink-500 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 hover:scale-105 transition-all duration-300">
-                  Learn More
-                </button>
-              </Link>
-            </div>
-          </div>
+          <Banner isLoggedIn={isLoggedIn} />
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-            {stats.map((stat, index) => (
-              <div key={`stat-${index}`} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{stat.number}</div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          <HeroStats stats={stats} />
         </div>
       </section>
 
