@@ -10,6 +10,13 @@
  * @param additionalData - Optional additional data for uniqueness
  * @returns A unique string key
  */
+import { ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export function generateUniqueKey(
   prefix: string,
   id?: string | number,
